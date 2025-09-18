@@ -29,6 +29,7 @@ export declare class DashboardsController {
             roles: string[];
             classId?: import("mongoose").Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -79,6 +80,7 @@ export declare class DashboardsController {
             roles: string[];
             classId?: import("mongoose").Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -115,6 +117,7 @@ export declare class DashboardsController {
             roles: string[];
             classId?: import("mongoose").Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -165,6 +168,7 @@ export declare class DashboardsController {
             roles: string[];
             classId?: import("mongoose").Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -204,6 +208,7 @@ export declare class DashboardsController {
             roles: string[];
             classId?: import("mongoose").Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;

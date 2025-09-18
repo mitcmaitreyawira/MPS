@@ -4,6 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CacheService } from './services/cache.service';
 import { PerformanceService } from './services/performance.service';
 import { StructuredLoggerService } from './services/logger.service';
+import { DevLockService } from './services/dev-lock.service';
 import { PerformanceMetric, PerformanceMetricSchema, RequestTimer, RequestTimerSchema } from '../database/schemas/performance-metric.schema';
 
 /**
@@ -19,7 +20,7 @@ import { PerformanceMetric, PerformanceMetricSchema, RequestTimer, RequestTimerS
       { name: RequestTimer.name, schema: RequestTimerSchema },
     ]),
   ],
-  providers: [CacheService, PerformanceService, StructuredLoggerService],
-  exports: [CacheService, PerformanceService, StructuredLoggerService],
+  providers: [CacheService, PerformanceService, StructuredLoggerService, DevLockService],
+  exports: [CacheService, PerformanceService, StructuredLoggerService, DevLockService],
 })
 export class CommonModule {}

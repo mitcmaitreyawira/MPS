@@ -206,7 +206,7 @@ let UsersService = class UsersService {
                 return cachedUser;
             }
             const dbStartTime = Date.now();
-            const user = await this.userModel.findById(id).select('-password').populate('classId', 'name _id').exec();
+            const user = await this.userModel.findOne({ _id: id, deletedAt: null }).select('-password').populate('classId', 'name _id').exec();
             const dbDuration = Date.now() - dbStartTime;
             this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
                 userId: id,
@@ -551,7 +551,7 @@ let UsersService = class UsersService {
             user_validation_helper_1.UserValidationHelper.validateUserId(id);
             const updateStartTime = Date.now();
             const restoredUser = await this.userModel
-                .findByIdAndUpdate(id, { isArchived: false }, { new: true })
+                .findByIdAndUpdate(id, { isArchived: false, deletedAt: null }, { new: true })
                 .select('-password')
                 .populate('classId', 'name')
                 .exec();
@@ -580,11 +580,11 @@ let UsersService = class UsersService {
         try {
             user_validation_helper_1.UserValidationHelper.validateUserId(id);
             const dbStartTime = Date.now();
-            const res = await this.userModel.findByIdAndDelete(id).exec();
+            const res = await this.userModel.findByIdAndUpdate(id, { deletedAt: new Date() }, { new: true }).exec();
             const dbDuration = Date.now() - dbStartTime;
-            this.performanceService.trackDatabaseOperation('findByIdAndDelete', 'users', dbDuration, {
+            this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', dbDuration, {
                 userId: id,
-                deleted: !!res,
+                softDeleted: !!res,
             });
             if (!res) {
                 this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });

@@ -136,6 +136,9 @@ export class User {
   @Prop({ default: false })
   isArchived?: boolean;
 
+  @Prop({ type: Date, default: null })
+  deletedAt?: Date | null;
+
   @Prop()
   lastLoginAt?: Date;
 
@@ -149,19 +152,23 @@ export class User {
 export const UserSchema = SchemaFactory.createForClass(User);
 
 // Add indexes for better query performance
-UserSchema.index({ username: 1 }, { unique: true, sparse: true });
-UserSchema.index({ nisn: 1 }, { unique: true });
+// Partial unique indexes to allow multiple soft-deleted records
+UserSchema.index({ username: 1 }, { unique: true, sparse: true, partialFilterExpression: { deletedAt: null } });
+UserSchema.index({ nisn: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
 UserSchema.index({ classId: 1 });
 UserSchema.index({ roles: 1 });
 UserSchema.index({ isArchived: 1 });
+UserSchema.index({ deletedAt: 1 });
 UserSchema.index({ createdAt: -1 });
 
 // Compound indexes for common query patterns
 UserSchema.index({ classId: 1, isArchived: 1 });
 UserSchema.index({ roles: 1, isArchived: 1 });
 UserSchema.index({ isArchived: 1, createdAt: -1 });
+UserSchema.index({ deletedAt: 1, createdAt: -1 });
 UserSchema.index({ classId: 1, roles: 1 });
 UserSchema.index({ nisn: 1, isArchived: 1 });
+UserSchema.index({ nisn: 1, deletedAt: 1 });
 
 // Virtual for fullName
 UserSchema.virtual('fullName').get(function () {

@@ -13,6 +13,7 @@ const mongoose_1 = require("@nestjs/mongoose");
 const cache_service_1 = require("./services/cache.service");
 const performance_service_1 = require("./services/performance.service");
 const logger_service_1 = require("./services/logger.service");
+const dev_lock_service_1 = require("./services/dev-lock.service");
 const performance_metric_schema_1 = require("../database/schemas/performance-metric.schema");
 let CommonModule = class CommonModule {
 };
@@ -26,8 +27,8 @@ exports.CommonModule = CommonModule = __decorate([
                 { name: performance_metric_schema_1.RequestTimer.name, schema: performance_metric_schema_1.RequestTimerSchema },
             ]),
         ],
-        providers: [cache_service_1.CacheService, performance_service_1.PerformanceService, logger_service_1.StructuredLoggerService],
-        exports: [cache_service_1.CacheService, performance_service_1.PerformanceService, logger_service_1.StructuredLoggerService],
+        providers: [cache_service_1.CacheService, performance_service_1.PerformanceService, logger_service_1.StructuredLoggerService, dev_lock_service_1.DevLockService],
+        exports: [cache_service_1.CacheService, performance_service_1.PerformanceService, logger_service_1.StructuredLoggerService, dev_lock_service_1.DevLockService],
     })
 ], CommonModule);
 //# sourceMappingURL=common.module.js.map

@@ -173,6 +173,11 @@ export class UserDataTransformer {
       filter.isArchived = { $ne: true };
     }
 
+    // Handle soft-deleted users - by default exclude deleted unless explicitly requested
+    if (!query.includeDeleted) {
+      filter.deletedAt = { $eq: null };
+    }
+
     // Date filters
     if (query.createdAfter || query.createdBefore) {
       filter.createdAt = {};

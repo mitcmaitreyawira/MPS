@@ -50,6 +50,7 @@ export declare class DashboardsService {
             roles: string[];
             classId?: Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -100,6 +101,7 @@ export declare class DashboardsService {
             roles: string[];
             classId?: Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -136,6 +138,7 @@ export declare class DashboardsService {
             roles: string[];
             classId?: Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -186,6 +189,7 @@ export declare class DashboardsService {
             roles: string[];
             classId?: Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;
@@ -225,6 +229,7 @@ export declare class DashboardsService {
             roles: string[];
             classId?: Types.ObjectId;
             isArchived?: boolean;
+            deletedAt?: Date | null;
             lastLoginAt?: Date;
             profile: import("../../database/schemas/user.schema").UserProfile;
             preferences: import("../../database/schemas/user.schema").UserPreferences;

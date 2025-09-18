@@ -127,6 +127,9 @@ class UserDataTransformer {
         if (!query.includeArchived) {
             filter.isArchived = { $ne: true };
         }
+        if (!query.includeDeleted) {
+            filter.deletedAt = { $eq: null };
+        }
         if (query.createdAfter || query.createdBefore) {
             filter.createdAt = {};
             if (query.createdAfter) {

@@ -153,6 +153,7 @@ let User = class User {
     roles;
     classId;
     isArchived;
+    deletedAt;
     lastLoginAt;
     profile;
     preferences;
@@ -231,6 +232,10 @@ __decorate([
     __metadata("design:type", Boolean)
 ], User.prototype, "isArchived", void 0);
 __decorate([
+    (0, mongoose_1.Prop)({ type: Date, default: null }),
+    __metadata("design:type", Object)
+], User.prototype, "deletedAt", void 0);
+__decorate([
     (0, mongoose_1.Prop)(),
     __metadata("design:type", Date)
 ], User.prototype, "lastLoginAt", void 0);
@@ -246,17 +251,20 @@ exports.User = User = __decorate([
     (0, mongoose_1.Schema)({ timestamps: true })
 ], User);
 exports.UserSchema = mongoose_1.SchemaFactory.createForClass(User);
-exports.UserSchema.index({ username: 1 }, { unique: true, sparse: true });
-exports.UserSchema.index({ nisn: 1 }, { unique: true });
+exports.UserSchema.index({ username: 1 }, { unique: true, sparse: true, partialFilterExpression: { deletedAt: null } });
+exports.UserSchema.index({ nisn: 1 }, { unique: true, partialFilterExpression: { deletedAt: null } });
 exports.UserSchema.index({ classId: 1 });
 exports.UserSchema.index({ roles: 1 });
 exports.UserSchema.index({ isArchived: 1 });
+exports.UserSchema.index({ deletedAt: 1 });
 exports.UserSchema.index({ createdAt: -1 });
 exports.UserSchema.index({ classId: 1, isArchived: 1 });
 exports.UserSchema.index({ roles: 1, isArchived: 1 });
 exports.UserSchema.index({ isArchived: 1, createdAt: -1 });
+exports.UserSchema.index({ deletedAt: 1, createdAt: -1 });
 exports.UserSchema.index({ classId: 1, roles: 1 });
 exports.UserSchema.index({ nisn: 1, isArchived: 1 });
+exports.UserSchema.index({ nisn: 1, deletedAt: 1 });
 exports.UserSchema.virtual('fullName').get(function () {
     const firstName = this.firstName || '';
     const lastName = this.lastName || '';

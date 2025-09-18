@@ -49,6 +49,7 @@ export declare class User {
     roles: string[];
     classId?: Types.ObjectId;
     isArchived?: boolean;
+    deletedAt?: Date | null;
     lastLoginAt?: Date;
     profile: UserProfile;
     preferences: UserPreferences;

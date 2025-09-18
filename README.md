@@ -109,26 +109,52 @@ npm run build --filter=backend
 
 ## 🔧 Configuration
 
-### Environment Variables
+### Unified Environment Configuration
 
-Copy the unified environment configuration file:
+The project uses a **unified configuration approach** where a single `.env` file works for both development and production environments:
 
 ```bash
 cp .env.example .env
 ```
 
-This single `.env` file contains all configuration for both development and production. The configuration is automatically shared between:
-- Backend API (`apps/backend/`)
-- Frontend application (`apps/frontend/`)
-- Docker services (`docker-compose.yml`)
-- Development scripts
+#### Configuration Features:
 
-**Important**: Review and update the following variables for production:
-- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`
-- `MONGODB_URI` (if using external MongoDB)
-- `CORS_ORIGIN` (set to your frontend domain)
-- `SMTP_*` settings for email functionality
-- `FORCE_HTTPS=true` for production deployments
+- **Single source of truth**: One `.env` file for all environments
+- **Docker integration**: Both `docker-compose.yml` and `docker-compose.dev.yml` use the same variables
+- **Environment variable substitution**: All Docker services use `${VAR:-default}` syntax
+- **Fallback defaults**: Safe defaults for development, customizable for production
+
+#### Development Setup:
+
+```bash
+# Copy and use defaults
+cp .env.example .env
+
+# Start with Docker
+npm run docker:dev
+
+# Or start locally
+npm run dev
+```
+
+#### Production Setup:
+
+**Critical**: Update these variables for production:
+- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET` - Use strong, unique secrets
+- `MONGO_INITDB_ROOT_PASSWORD` - Change default database password
+- `REDIS_PASSWORD` - Change default Redis password
+- `MONGODB_URI` - Update if using external MongoDB
+- `CORS_ORIGIN` - Set to your frontend domain
+- `SMTP_*` settings - Configure email functionality
+- `FORCE_HTTPS=true` - Enable HTTPS enforcement
+
+#### Configuration Architecture:
+
+The configuration is automatically shared between:
+- **Backend API** (`apps/backend/`) - Reads from `.env`
+- **Frontend application** (`apps/frontend/`) - Uses `VITE_*` prefixed variables
+- **Docker services** (`docker-compose.yml` & `docker-compose.dev.yml`) - Environment variable substitution
+- **Database initialization** (`scripts/mongo-init.js`) - Uses Docker environment variables
 
 ### Key Configuration Files
 

@@ -242,7 +242,7 @@ export class UsersService {
 
       // If not in cache, query database with performance tracking
       const dbStartTime = Date.now();
-      const user = await this.userModel.findById(id).select('-password').populate('classId', 'name _id').exec();
+      const user = await this.userModel.findOne({ _id: id, deletedAt: null }).select('-password').populate('classId', 'name _id').exec();
       const dbDuration = Date.now() - dbStartTime;
       
       this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
@@ -789,7 +789,7 @@ export class UsersService {
 
       const updateStartTime = Date.now();
       const restoredUser = await this.userModel
-        .findByIdAndUpdate(id, { isArchived: false }, { new: true })
+        .findByIdAndUpdate(id, { isArchived: false, deletedAt: null }, { new: true })
         .select('-password')
         .populate('classId', 'name')
         .exec();
@@ -817,10 +817,10 @@ export class UsersService {
   }
 
   /**
-   * Permanently delete a user from the database.
+   * Soft delete a user by setting deletedAt timestamp.
    * 
    * @param id - MongoDB ObjectId string of the user to delete
-   * @returns Promise that resolves when deletion is complete
+   * @returns Promise that resolves when soft deletion is complete
    * @throws {BadRequestException} When ID format is invalid
    * @throws {NotFoundException} When user is not found
    * 
@@ -837,14 +837,18 @@ export class UsersService {
       // Validate user ID using helper
       UserValidationHelper.validateUserId(id);
 
-      // Delete user with performance tracking
+      // Soft delete user with performance tracking
       const dbStartTime = Date.now();
-      const res = await this.userModel.findByIdAndDelete(id).exec();
+      const res = await this.userModel.findByIdAndUpdate(
+        id,
+        { deletedAt: new Date() },
+        { new: true }
+      ).exec();
       const dbDuration = Date.now() - dbStartTime;
       
-      this.performanceService.trackDatabaseOperation('findByIdAndDelete', 'users', dbDuration, {
+      this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', dbDuration, {
         userId: id,
-        deleted: !!res,
+        softDeleted: !!res,
       });
       
       if (!res) {
