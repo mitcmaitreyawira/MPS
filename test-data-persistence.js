@@ -16,7 +16,7 @@ const { promisify } = require('util');
 
 const execAsync = promisify(exec);
 
-const API_BASE_URL = 'http://localhost:3001/api/v1';
+const API_BASE_URL = 'http://localhost:3000/api/v1';
 const TEST_USER_NISN = `TEST_PERSIST_${Date.now()}`;
 
 // Test configuration
@@ -33,6 +33,11 @@ const testUser = {
   }
 };
 
+const ADMIN_CREDENTIALS = {
+  nisn: 'ADMIN001',
+  password: 'Admin123!'
+};
+
 let adminToken = null;
 
 async function sleep(ms) {
@@ -42,13 +47,46 @@ async function sleep(ms) {
 async function loginAsAdmin() {
   try {
     console.log('🔐 Logging in as admin...');
-    const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-      nisn: 'ADMIN001',
-      password: 'Admin123!'
+    
+    // First, get CSRF token by making a GET request
+    const healthResponse = await axios.get(`${API_BASE_URL}/health/db`, {
+      withCredentials: true
     });
-    adminToken = response.data.accessToken;
-    console.log('✅ Admin login successful');
-    return true;
+    
+    // Extract CSRF token from cookies
+    const cookies = healthResponse.headers['set-cookie'] || [];
+    let csrfToken = null;
+    for (const cookie of cookies) {
+      if (cookie.startsWith('csrf_token=')) {
+        csrfToken = cookie.split('=')[1].split(';')[0];
+        break;
+      }
+    }
+    
+    if (!csrfToken) {
+      throw new Error('Could not obtain CSRF token');
+    }
+    
+    console.log('🔒 CSRF token obtained');
+    
+    // Now login with CSRF token
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, ADMIN_CREDENTIALS, {
+      headers: {
+        'X-CSRF-Token': csrfToken,
+        'Content-Type': 'application/json',
+        'Cookie': cookies.join('; ')
+      },
+      withCredentials: true
+    });
+    
+    if (response.data && response.data.accessToken) {
+      adminToken = response.data.accessToken;
+      console.log('✅ Admin login successful');
+      return true;
+    } else {
+      console.log('❌ Admin login failed:', response.data);
+      return false;
+    }
   } catch (error) {
     console.error('❌ Admin login failed:', error.response?.data || error.message);
     return false;
@@ -64,7 +102,7 @@ async function createTestUser() {
         'Content-Type': 'application/json'
       }
     });
-    console.log('✅ Test user created successfully:', response.data.nisn);
+    console.log('✅ Test user created successfully:', response.data?.nisn || testUser.nisn);
     return response.data;
   } catch (error) {
     console.error('❌ Failed to create test user:', error.response?.data || error.message);
@@ -84,7 +122,7 @@ async function verifyUserExists(nisn) {
       }
     });
     
-    const userExists = response.data.users?.some(user => user.nisn === nisn);
+    const userExists = response.data.data?.users?.some(user => user.nisn === nisn);
     if (userExists) {
       console.log('✅ User found in database');
       return true;
@@ -126,16 +164,16 @@ async function simulateServerRestart() {
   
   try {
     // Note: In a real scenario, we would restart the backend service
-    // For this test, we'll just verify the backend is still running
-    // and the database connection is maintained
+    // For this test, we'll verify the backend and database are still working
+    // by checking the health endpoint which tests the database connection
     
-    console.log('📊 Checking database connection...');
-    const { stdout } = await execAsync('docker exec mps-mongodb-dev mongosh "mongodb://admin:password@localhost:27017/mps_db_unified?authSource=admin" --eval "db.runCommand({ping: 1})"');
+    console.log('📊 Checking database connection via health endpoint...');
+    const healthResponse = await axios.get(`${API_BASE_URL}/health/db`);
     
-    if (stdout.includes('"ok" : 1')) {
+    if (healthResponse.data.success && healthResponse.data.data.ok) {
       console.log('✅ Database connection is healthy');
     } else {
-      throw new Error('Database ping failed');
+      throw new Error('Database health check failed');
     }
     
     // Verify backend is still responsive

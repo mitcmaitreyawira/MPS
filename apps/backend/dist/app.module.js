@@ -81,7 +81,7 @@ exports.AppModule = AppModule = __decorate([
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 load: [configuration_1.default],
-                envFilePath: ['.env.local', '.env'],
+                envFilePath: ['.env.local', '.env', '../../.env'],
             }),
             mongoose_1.MongooseModule.forRootAsync({
                 inject: [config_1.ConfigService],

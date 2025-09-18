@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     define: {
       // Prefer VITE_API_URL, fall back to VITE_API_BASE_URL, then sensible dev default
       'import.meta.env.VITE_API_URL': JSON.stringify(
-        env.VITE_API_URL || env.VITE_API_BASE_URL || 'http://localhost:3001/api/v1'
+        env.VITE_API_URL || env.VITE_API_BASE_URL || 'http://localhost:3000'
       )
     },
     resolve: {

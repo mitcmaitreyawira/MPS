@@ -38,7 +38,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env.local', '.env', '../../.env'],
     }),
     MongooseModule.forRootAsync({
       inject: [ConfigService],

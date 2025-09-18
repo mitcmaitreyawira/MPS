@@ -69,10 +69,21 @@ let PointLogsService = class PointLogsService {
         };
     }
     async create(createPointLogDto) {
+        const targetUser = await this.userModel.findById(createPointLogDto.studentId).exec();
+        if (!targetUser) {
+            throw new common_1.NotFoundException(`User with ID ${createPointLogDto.studentId} not found`);
+        }
+        const hasStudentRole = targetUser.roles && targetUser.roles.includes('student');
+        if (!hasStudentRole) {
+            throw new common_1.BadRequestException('Points can only be awarded to users with the student role');
+        }
+        const normalizedPoints = createPointLogDto.type === point_log_entity_1.PointType.VIOLATION
+            ? -Math.abs(createPointLogDto.points)
+            : Math.abs(createPointLogDto.points);
         const currentTotal = await this.getStudentTotalPoints(createPointLogDto.studentId);
-        const newTotal = currentTotal + createPointLogDto.points;
-        let adjustedPoints = createPointLogDto.points;
-        if (newTotal > 100 && createPointLogDto.points > 0) {
+        const newTotal = currentTotal + normalizedPoints;
+        let adjustedPoints = normalizedPoints;
+        if (newTotal > 100 && normalizedPoints > 0) {
             adjustedPoints = Math.max(0, 100 - currentTotal);
         }
         const pointLog = await this.pointLogModel.create({

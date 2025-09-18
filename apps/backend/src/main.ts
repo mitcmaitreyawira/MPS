@@ -16,6 +16,46 @@ async function bootstrap() {
   const tempLogger = new Logger('BootstrapDebug');
   tempLogger.log('🚀 BOOTSTRAP FUNCTION STARTED');
   
+  // Production safety rails - validate critical environment variables
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  const isProduction = nodeEnv === 'production';
+  
+  if (isProduction) {
+    const requiredEnvVars = [
+      'MONGODB_URI',
+      'JWT_ACCESS_SECRET',
+      'JWT_REFRESH_SECRET',
+      'CORS_ORIGIN'
+    ];
+    
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    if (missingVars.length > 0) {
+      tempLogger.error(`❌ Production startup failed: Missing required environment variables: ${missingVars.join(', ')}`);
+      process.exit(1);
+    }
+    
+    // Validate JWT secrets are strong enough for production
+    const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+    
+    if (jwtAccessSecret && jwtAccessSecret.length < 32) {
+      tempLogger.error('❌ Production startup failed: JWT_ACCESS_SECRET must be at least 32 characters long');
+      process.exit(1);
+    }
+    
+    if (jwtRefreshSecret && jwtRefreshSecret.length < 32) {
+      tempLogger.error('❌ Production startup failed: JWT_REFRESH_SECRET must be at least 32 characters long');
+      process.exit(1);
+    }
+    
+    // Ensure HTTPS is enforced in production
+    if (!process.env.FORCE_HTTPS && !process.env.CORS_ORIGIN?.startsWith('https://')) {
+      tempLogger.warn('⚠️  Production warning: HTTPS not enforced. Set FORCE_HTTPS=true for production deployments.');
+    }
+    
+    tempLogger.log('✅ Production safety checks passed');
+  }
+  
   const app = await NestFactory.create(AppModule);
   tempLogger.log('✅ NestFactory.create completed');
   const configService = app.get(ConfigService);
@@ -100,7 +140,7 @@ async function bootstrap() {
    */
   const corsOriginsRaw = configService.get<string>('CORS_ORIGIN');
   console.log('🔧 Got CORS_ORIGIN:', corsOriginsRaw);
-  const defaultOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5176'];
+  const defaultOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5176', 'http://localhost:5184', 'http://localhost:5185', 'http://localhost:5189', 'http://localhost:5191'];
   const allowedOrigins = new Set([
     ...defaultOrigins,
     ...((corsOriginsRaw || '').split(',').map((o) => o.trim()).filter(Boolean)),
@@ -239,7 +279,7 @@ async function bootstrap() {
     logger.warn('Migration execution failed, continuing startup...');
   }
 
-  const port = configService.get('PORT', 3001);
+  const port = configService.get('app.port', 3001);
   await app.listen(port);
 
   logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);

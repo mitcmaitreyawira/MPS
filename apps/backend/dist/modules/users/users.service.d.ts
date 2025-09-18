@@ -18,6 +18,7 @@ export declare class UsersService {
     private readonly cacheHelper;
     private readonly validationHelper;
     constructor(userModel: Model<User>, connection: Connection, cacheService: CacheService, performanceService: PerformanceService, errorResponseService: ErrorResponseService, pointLogsService: PointLogsService, auditService: AuditService);
+    private executeWithTransaction;
     private executeWithoutTransaction;
     findByClassId(classId: string): Promise<User[]>;
     findAll(query: QueryUsersDto): Promise<{

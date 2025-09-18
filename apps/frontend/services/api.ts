@@ -103,15 +103,15 @@ function transformBackendClass(backendClass: any): Class {
 // Helper function to normalize ActionPreset from backend
 function transformBackendActionPreset(p: any): ActionPreset {
     return {
-        id: p?.id || p?._id,
-        name: p?.name,
-        type: p?.type,
-        points: p?.points,
-        category: p?.category,
-        description: p?.description,
+        id: String(p?.id || p?._id || ''),
+        name: p?.name || '',
+        type: String(p?.type || '').toUpperCase(),
+        points: Number(p?.points || 0),
+        category: p?.category || '',
+        description: p?.description || '',
         badgeTier: p?.badgeTier,
         icon: p?.icon,
-        isArchived: !!p?.isArchived,
+        isArchived: Boolean(p?.isArchived || false),
         createdBy: (p?.createdBy && typeof p.createdBy === 'object')
             ? (p.createdBy.id || p.createdBy._id)
             : p?.createdBy,

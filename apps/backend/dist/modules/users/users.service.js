@@ -85,9 +85,43 @@ let UsersService = class UsersService {
         this.cacheHelper = new user_cache_helper_1.UserCacheHelper(cacheService);
         this.validationHelper = new user_validation_helper_1.UserValidationHelper(userModel);
     }
-    async executeWithoutTransaction(operation, operationName) {
+    async executeWithTransaction(operation, operationName, invalidateCache = true) {
+        const session = await this.connection.startSession();
         try {
-            return await operation();
+            session.startTransaction();
+            const result = await operation(session);
+            await session.commitTransaction();
+            if (invalidateCache) {
+                try {
+                    await this.cacheHelper.invalidateUsersListCache();
+                }
+                catch (cacheError) {
+                    console.warn(`Cache invalidation failed after ${operationName}:`, cacheError);
+                }
+            }
+            return result;
+        }
+        catch (error) {
+            await session.abortTransaction();
+            console.error(`Failed to execute ${operationName}:`, error);
+            throw error;
+        }
+        finally {
+            await session.endSession();
+        }
+    }
+    async executeWithoutTransaction(operation, operationName, invalidateCache = true) {
+        try {
+            const result = await operation();
+            if (invalidateCache) {
+                try {
+                    await this.cacheHelper.invalidateUsersListCache();
+                }
+                catch (cacheError) {
+                    console.warn(`Cache invalidation failed after ${operationName}:`, cacheError);
+                }
+            }
+            return result;
         }
         catch (error) {
             console.error(`Failed to execute ${operationName}:`, error);
@@ -194,7 +228,7 @@ let UsersService = class UsersService {
     async create(createUserDto) {
         const timerId = this.performanceHelper.startTimer('createUser', { nisn: createUserDto.nisn || 'no-nisn' });
         try {
-            return await this.executeWithoutTransaction(async () => {
+            return await this.executeWithTransaction(async (session) => {
                 if (createUserDto.nisn) {
                     createUserDto.nisn = createUserDto.nisn.trim();
                 }
@@ -206,7 +240,7 @@ let UsersService = class UsersService {
                 const userData = user_data_transformer_helper_1.UserDataTransformer.transformCreateDto(createUserDto, hashedPassword);
                 const createStartTime = Date.now();
                 const newUser = new this.userModel(userData);
-                const savedUser = await newUser.save();
+                const savedUser = await newUser.save({ session });
                 const createDuration = Date.now() - createStartTime;
                 this.performanceService.trackDatabaseOperation('create', 'users', createDuration, {
                     userId: savedUser._id.toString(),
@@ -229,18 +263,51 @@ let UsersService = class UsersService {
                 return userResponse;
             }, 'createUser');
         }
-        catch (error) {
-            this.performanceService.endTimer(timerId, { error: true });
-            throw error;
+        catch (transactionError) {
+            console.warn('Transaction failed, falling back to non-transaction approach:', transactionError?.message || 'Unknown error');
+            try {
+                return await this.executeWithoutTransaction(async () => {
+                    if (createUserDto.nisn) {
+                        createUserDto.nisn = createUserDto.nisn.trim();
+                    }
+                    let hashedPassword = '';
+                    if (createUserDto.password) {
+                        const saltRounds = 12;
+                        hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+                    }
+                    const userData = user_data_transformer_helper_1.UserDataTransformer.transformCreateDto(createUserDto, hashedPassword);
+                    const createStartTime = Date.now();
+                    const newUser = new this.userModel(userData);
+                    const savedUser = await newUser.save();
+                    const createDuration = Date.now() - createStartTime;
+                    this.performanceService.trackDatabaseOperation('create', 'users', createDuration, {
+                        userId: savedUser._id.toString(),
+                        roles: savedUser.roles,
+                    });
+                    if (savedUser.roles && savedUser.roles.includes('student')) {
+                        await this.pointLogsService.create({
+                            studentId: savedUser._id.toString(),
+                            points: 100,
+                            type: point_log_entity_1.PointType.REWARD,
+                            category: 'Initial Setup',
+                            description: 'Welcome bonus - starting points for new student',
+                            addedBy: 'system',
+                            academicYear: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
+                        });
+                        console.log(`✅ Initial 100 points granted to new student: ${savedUser.firstName} ${savedUser.lastName} (${savedUser.nisn || savedUser._id})`);
+                    }
+                    const userResponse = savedUser.toObject();
+                    delete userResponse.password;
+                    return userResponse;
+                }, 'createUser');
+            }
+            catch (error) {
+                this.performanceService.endTimer(timerId, { error: true });
+                throw error;
+            }
         }
         finally {
-            try {
-                await this.cacheHelper.invalidateUsersListCache();
-                this.performanceService.endTimer(timerId, { success: true });
-            }
-            catch (cacheError) {
-                console.warn('Cache invalidation failed:', cacheError);
-            }
+            this.performanceService.endTimer(timerId, { success: true });
         }
     }
     async createBulk(createUserDtos) {
@@ -314,70 +381,137 @@ let UsersService = class UsersService {
         const timerId = `updateUser-${Date.now()}`;
         this.performanceService.startTimer(timerId, { userId: id });
         try {
-            user_validation_helper_1.UserValidationHelper.validateUserId(id);
-            const dbStartTime = Date.now();
-            const existingUser = await this.userModel.findById(id).exec();
-            const dbDuration = Date.now() - dbStartTime;
-            this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
-                userId: id,
-                found: !!existingUser,
-            });
-            if (!existingUser) {
-                this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
-                throw new common_1.NotFoundException('User not found');
-            }
-            if (updateUserDto.nisn) {
-                updateUserDto.nisn = updateUserDto.nisn.trim();
-            }
-            if (updateUserDto.nisn && updateUserDto.nisn !== existingUser.nisn) {
-                const nisnCheckStart = Date.now();
-                const nisnConflict = await this.userModel.findOne({
-                    nisn: updateUserDto.nisn,
-                    _id: { $ne: id }
-                }).exec();
-                const nisnCheckDuration = Date.now() - nisnCheckStart;
-                this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
-                    nisn: updateUserDto.nisn,
-                    conflict: !!nisnConflict,
+            return await this.executeWithTransaction(async (session) => {
+                user_validation_helper_1.UserValidationHelper.validateUserId(id);
+                const dbStartTime = Date.now();
+                const existingUser = await this.userModel.findById(id).session(session).exec();
+                const dbDuration = Date.now() - dbStartTime;
+                this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
+                    userId: id,
+                    found: !!existingUser,
                 });
-                if (nisnConflict) {
-                    this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
-                    const errorResponse = this.errorResponseService.createDuplicateResourceError('User', 'nisn', updateUserDto.nisn);
-                    throw new common_1.ConflictException(errorResponse);
+                if (!existingUser) {
+                    this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
+                    throw new common_1.NotFoundException('User not found');
                 }
-            }
-            const updateData = user_data_transformer_helper_1.UserDataTransformer.transformUpdateDto(updateUserDto);
-            const updateStartTime = Date.now();
-            const updatedUser = await this.userModel
-                .findByIdAndUpdate(id, updateData, { new: true })
-                .select('-password')
-                .exec();
-            const updateDuration = Date.now() - updateStartTime;
-            this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
-                userId: id,
-                updated: !!updatedUser,
-            });
-            if (!updatedUser) {
-                this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
-                throw new common_1.NotFoundException('User not found after update');
-            }
-            await this.auditService.log('system', audit_action_enum_1.AuditAction.USER_UPDATED, 'User', id, {
-                updatedFields: Object.keys(updateData),
-                previousValues: {
-                    name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
-                    points: existingUser.points,
-                    classId: existingUser.classId
-                },
-                newValues: updateData
-            });
-            await this.cacheHelper.invalidateUserCache(id);
-            await this.cacheHelper.invalidateUsersListCache();
-            this.performanceService.endTimer(timerId, { success: true, userId: id });
-            return updatedUser;
+                if (updateUserDto.nisn) {
+                    updateUserDto.nisn = updateUserDto.nisn.trim();
+                }
+                if (updateUserDto.nisn && updateUserDto.nisn !== existingUser.nisn) {
+                    const nisnCheckStart = Date.now();
+                    const nisnConflict = await this.userModel.findOne({
+                        nisn: updateUserDto.nisn,
+                        _id: { $ne: id }
+                    }).session(session).exec();
+                    const nisnCheckDuration = Date.now() - nisnCheckStart;
+                    this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
+                        nisn: updateUserDto.nisn,
+                        conflict: !!nisnConflict,
+                    });
+                    if (nisnConflict) {
+                        this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
+                        const errorResponse = this.errorResponseService.createDuplicateResourceError('User', 'nisn', updateUserDto.nisn);
+                        throw new common_1.ConflictException(errorResponse);
+                    }
+                }
+                const updateData = user_data_transformer_helper_1.UserDataTransformer.transformUpdateDto(updateUserDto);
+                const updateStartTime = Date.now();
+                const updatedUser = await this.userModel
+                    .findByIdAndUpdate(id, updateData, { new: true, session })
+                    .select('-password')
+                    .exec();
+                const updateDuration = Date.now() - updateStartTime;
+                this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
+                    userId: id,
+                    updated: !!updatedUser,
+                });
+                if (!updatedUser) {
+                    this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
+                    throw new common_1.NotFoundException('User not found after update');
+                }
+                await this.auditService.log('system', audit_action_enum_1.AuditAction.USER_UPDATED, 'User', id, {
+                    updatedFields: Object.keys(updateData),
+                    previousValues: {
+                        name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
+                        points: existingUser.points,
+                        classId: existingUser.classId
+                    },
+                    newValues: updateData
+                });
+                await this.cacheHelper.invalidateUserCache(id);
+                this.performanceService.endTimer(timerId, { success: true, userId: id });
+                return updatedUser;
+            }, 'updateUser');
         }
-        catch (error) {
-            this.performanceService.endTimer(timerId, { error: true });
-            throw error;
+        catch (transactionError) {
+            console.warn('Transaction failed for update, falling back to non-transaction approach:', transactionError?.message || 'Unknown error');
+            try {
+                return await this.executeWithoutTransaction(async () => {
+                    user_validation_helper_1.UserValidationHelper.validateUserId(id);
+                    const dbStartTime = Date.now();
+                    const existingUser = await this.userModel.findById(id).exec();
+                    const dbDuration = Date.now() - dbStartTime;
+                    this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
+                        userId: id,
+                        found: !!existingUser,
+                    });
+                    if (!existingUser) {
+                        this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
+                        throw new common_1.NotFoundException('User not found');
+                    }
+                    if (updateUserDto.nisn) {
+                        updateUserDto.nisn = updateUserDto.nisn.trim();
+                    }
+                    if (updateUserDto.nisn && updateUserDto.nisn !== existingUser.nisn) {
+                        const nisnCheckStart = Date.now();
+                        const nisnConflict = await this.userModel.findOne({
+                            nisn: updateUserDto.nisn,
+                            _id: { $ne: id }
+                        }).exec();
+                        const nisnCheckDuration = Date.now() - nisnCheckStart;
+                        this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
+                            nisn: updateUserDto.nisn,
+                            conflict: !!nisnConflict,
+                        });
+                        if (nisnConflict) {
+                            this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
+                            const errorResponse = this.errorResponseService.createDuplicateResourceError('User', 'nisn', updateUserDto.nisn);
+                            throw new common_1.ConflictException(errorResponse);
+                        }
+                    }
+                    const updateData = user_data_transformer_helper_1.UserDataTransformer.transformUpdateDto(updateUserDto);
+                    const updateStartTime = Date.now();
+                    const updatedUser = await this.userModel
+                        .findByIdAndUpdate(id, updateData, { new: true })
+                        .select('-password')
+                        .exec();
+                    const updateDuration = Date.now() - updateStartTime;
+                    this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
+                        userId: id,
+                        updated: !!updatedUser,
+                    });
+                    if (!updatedUser) {
+                        this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
+                        throw new common_1.NotFoundException('User not found after update');
+                    }
+                    await this.auditService.log('system', audit_action_enum_1.AuditAction.USER_UPDATED, 'User', id, {
+                        updatedFields: Object.keys(updateData),
+                        previousValues: {
+                            name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
+                            points: existingUser.points,
+                            classId: existingUser.classId
+                        },
+                        newValues: updateData
+                    });
+                    await this.cacheHelper.invalidateUserCache(id);
+                    this.performanceService.endTimer(timerId, { success: true, userId: id });
+                    return updatedUser;
+                }, 'updateUser');
+            }
+            catch (error) {
+                this.performanceService.endTimer(timerId, { error: true });
+                throw error;
+            }
         }
     }
     async archive(id) {

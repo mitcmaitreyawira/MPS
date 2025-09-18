@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CreatePointLogDto, UpdatePointLogDto, QueryPointLogsDto, BulkCreatePointLogsDto } from './dto';
@@ -76,13 +76,30 @@ export class PointLogsService {
    * Create a new point log.
    */
   async create(createPointLogDto: CreatePointLogDto): Promise<PointLogEntity> {
+    // Validate that the target user exists and has the student role
+    const targetUser = await this.userModel.findById(createPointLogDto.studentId).exec();
+    if (!targetUser) {
+      throw new NotFoundException(`User with ID ${createPointLogDto.studentId} not found`);
+    }
+    
+    // Check if the target user has the student role
+    const hasStudentRole = targetUser.roles && targetUser.roles.includes('student');
+    if (!hasStudentRole) {
+      throw new BadRequestException('Points can only be awarded to users with the student role');
+    }
+    
+    // Enforce correct sign based on type (server-side guard)
+    const normalizedPoints = createPointLogDto.type === PointType.VIOLATION
+      ? -Math.abs(createPointLogDto.points)
+      : Math.abs(createPointLogDto.points);
+    
     // Enforce maximum score limit of 100
     const currentTotal = await this.getStudentTotalPoints(createPointLogDto.studentId);
-    const newTotal = currentTotal + createPointLogDto.points;
+    const newTotal = currentTotal + normalizedPoints;
     
     // If adding points would exceed 100, cap the points to reach exactly 100
-    let adjustedPoints = createPointLogDto.points;
-    if (newTotal > 100 && createPointLogDto.points > 0) {
+    let adjustedPoints = normalizedPoints;
+    if (newTotal > 100 && normalizedPoints > 0) {
       adjustedPoints = Math.max(0, 100 - currentTotal);
     }
     

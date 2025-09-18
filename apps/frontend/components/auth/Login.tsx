@@ -155,34 +155,78 @@ const Login: React.FC = () => {
   }, [password, fieldErrors.password]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your NISN and password
-          </p>
-        </div>
-        
-        <Card className="p-8">
-          <form className="space-y-6" onSubmit={handleSubmit}>
+    <div 
+      className="min-h-screen flex items-center justify-center p-4 relative"
+      style={{
+        backgroundImage: `url('/asset/Main_Statics_Things_eyak/MW_GEDUNG.webp')`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      {/* Background Overlay */}
+      <div className="absolute inset-0 bg-black/20"></div>
+      
+      <div className="w-full max-w-sm sm:max-w-md relative z-10 px-4">
+          {/* Apple Liquid Glass Card */}
+          <div className="bg-white/50 backdrop-blur-2xl rounded-2xl sm:rounded-3xl shadow-2xl p-4 sm:p-6 md:p-8 border border-white/60 backdrop-saturate-150">
+          {/* Logo and Title */}
+           <div className="text-center mb-6 sm:mb-8">
+             <div className="inline-flex items-center justify-center mb-4 sm:mb-6">
+               <img 
+                 src="/asset/Main_Statics_Things_eyak/MW_LOGO.webp" 
+                 alt="MPS Maitreyawira Logo" 
+                 className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain drop-shadow-2xl"
+                 loading="eager"
+               />
+             </div>
+             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-1 sm:mb-2 drop-shadow-lg">
+               MPS Maitreyawira
+             </h1>
+             <h2 className="text-lg sm:text-xl font-semibold text-white/90 mb-1">
+               Point System
+             </h2>
+             <p className="text-white/70 text-xs sm:text-sm">
+               Login dulu yah - MITC
+             </p>
+           </div>
+          <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="animate-in slide-in-from-top-2 duration-300">
-                <InlineNotification
-                  type="error"
-                  title={error.type === 'account_not_found' ? 'Account Not Found' : 
-                         error.type === 'invalid_password' ? 'Invalid Password' :
-                         error.type === 'network_error' ? 'Connection Error' :
-                         error.type === 'server_error' ? 'Server Error' : 'Login Error'}
-                  message={error.message}
-                  onClose={() => {
-                    setError(null);
-                    setFieldErrors({});
-                  }}
-                  action={error.recoveryActions?.[0]}
-                />
+                <div className="rounded-xl bg-red-500/20 backdrop-blur-sm border border-red-400/30 p-4">
+                   <div className="flex">
+                     <div className="ml-3">
+                       <h3 className="text-sm font-medium text-red-100">
+                         {error.type === 'account_not_found' ? 'Account Not Found' : 
+                          error.type === 'invalid_password' ? 'Invalid Password' :
+                          error.type === 'network_error' ? 'Connection Error' :
+                          error.type === 'server_error' ? 'Server Error' : 'Login Error'}
+                       </h3>
+                       <div className="mt-2 text-sm text-red-200">
+                         <p>{error.message}</p>
+                       </div>
+                      {error.recoveryActions && (
+                        <div className="mt-3">
+                          <button
+                            onClick={error.recoveryActions[0].onClick}
+                            className="text-sm bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded-lg transition-colors"
+                          >
+                            {error.recoveryActions[0].label}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => {
+                        setError(null);
+                        setFieldErrors({});
+                      }}
+                      className="ml-auto text-red-400 hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
             
@@ -253,7 +297,7 @@ const Login: React.FC = () => {
             )}
             
             <div>
-              <label htmlFor="identifier" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="identifier" className="block text-sm font-medium text-white/90 mb-2">
                 NISN
               </label>
               <Input
@@ -265,17 +309,17 @@ const Login: React.FC = () => {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="Enter your NISN"
-                className={`mt-1 transition-all duration-200 ${
+                className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                   fieldErrors.identifier 
-                    ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' 
-                    : 'focus:border-blue-500 focus:ring-blue-200'
+                    ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200 text-red-900 placeholder-red-400' 
+                    : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500'
                 }`}
                 disabled={loading}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">
                 Password
               </label>
               <div className="relative">
@@ -288,17 +332,17 @@ const Login: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className={`mt-1 pr-10 transition-all duration-200 ${
+                  className={`w-full px-4 py-3 pr-12 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 ${
                     fieldErrors.password 
-                      ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200' 
-                      : 'focus:border-blue-500 focus:ring-blue-200'
+                      ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-200 text-red-900 placeholder-red-400' 
+                      : 'border-gray-300 bg-white text-gray-900 placeholder-gray-500 hover:border-gray-400 focus:ring-blue-500 focus:border-blue-500'
                   }`}
                   disabled={loading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded"
                   disabled={loading}
                 >
                   {showPassword ? 'Hide' : 'Show'}
@@ -306,41 +350,24 @@ const Login: React.FC = () => {
               </div>
             </div>
             
-            <div>
-              <Button
+            <Button
                 type="submit"
-                className={`w-full flex justify-center py-3 px-4 transition-all duration-200 ${
-                  loading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transform hover:scale-[1.02] active:scale-[0.98]'
-                } text-white font-medium rounded-lg shadow-lg`}
                 disabled={loading}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg"
               >
                 {loading ? (
-                  <>
-                    <LoadingSpinner className="w-4 h-4 mr-2" />
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     Signing in...
-                  </>
+                  </div>
                 ) : (
-                  <>
-                    Sign in
-                  </>
+                  'Sign in'
                 )}
               </Button>
-            </div>
           </form>
           
-          <div className="mt-6">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium">Demo Accounts:</p>
-              <div className="mt-2 space-y-1">
-                <p>Student: 1001234567 / Student123!</p>
-                <p>Teacher: TEACH001 / Teacher123!</p>
-                <p>Admin: ADMIN001 / Admin123!</p>
-              </div>
-            </div>
-          </div>
-        </Card>
+
+        </div>
       </div>
     </div>
   );

@@ -1,60 +1,116 @@
 // MongoDB initialization script
 // This script runs when the MongoDB container starts for the first time
+// It is idempotent - safe to run multiple times without duplicating data
+
+// Get database name from environment or use default
+const dbName = process.env.MONGO_INITDB_DATABASE || 'mps_db_unified';
+print(`Initializing database: ${dbName}`);
 
 // Switch to the application database
-db = db.getSiblingDB('mps_db');
+db = db.getSiblingDB(dbName);
 
-// Create application user
-db.createUser({
-  user: 'mps_user',
-  pwd: 'mps_password',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'mps_db'
+// Create application user (idempotent)
+try {
+  const existingUser = db.getUser('mps_user');
+  if (!existingUser) {
+    db.createUser({
+      user: 'mps_user',
+      pwd: 'mps_password',
+      roles: [
+        {
+          role: 'readWrite',
+          db: dbName
+        }
+      ]
+    });
+    print('Created application user: mps_user');
+  } else {
+    print('Application user mps_user already exists, skipping creation');
+  }
+} catch (error) {
+  if (error.code !== 11000) { // Ignore duplicate key errors
+    print('Error creating user: ' + error.message);
+  }
+}
+
+// Create collections and indexes (idempotent)
+
+// Helper function to create collection if it doesn't exist
+function createCollectionIfNotExists(collectionName) {
+  const collections = db.getCollectionNames();
+  if (!collections.includes(collectionName)) {
+    db.createCollection(collectionName);
+    print(`Created collection: ${collectionName}`);
+  } else {
+    print(`Collection ${collectionName} already exists, skipping creation`);
+  }
+}
+
+// Helper function to create index if it doesn't exist
+function createIndexIfNotExists(collection, indexSpec, options = {}) {
+  try {
+    collection.createIndex(indexSpec, options);
+  } catch (error) {
+    if (error.code !== 85) { // Index already exists
+      print(`Error creating index: ${error.message}`);
     }
-  ]
-});
-
-// Create collections and indexes
+  }
+}
 
 // Users collection
-db.createCollection('users');
-db.users.createIndex({ email: 1 }, { unique: true });
-db.users.createIndex({ username: 1 }, { unique: true });
-db.users.createIndex({ createdAt: 1 });
-db.users.createIndex({ isActive: 1 });
-db.users.createIndex({ roles: 1 });
+createCollectionIfNotExists('users');
+createIndexIfNotExists(db.users, { email: 1 }, { unique: true });
+createIndexIfNotExists(db.users, { username: 1 }, { unique: true });
+createIndexIfNotExists(db.users, { createdAt: 1 });
+createIndexIfNotExists(db.users, { isActive: 1 });
+createIndexIfNotExists(db.users, { roles: 1 });
 
 // Sessions collection (for JWT blacklisting)
-db.createCollection('sessions');
-db.sessions.createIndex({ token: 1 }, { unique: true });
-db.sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-db.sessions.createIndex({ userId: 1 });
+createCollectionIfNotExists('sessions');
+createIndexIfNotExists(db.sessions, { token: 1 }, { unique: true });
+createIndexIfNotExists(db.sessions, { expiresAt: 1 }, { expireAfterSeconds: 0 });
+createIndexIfNotExists(db.sessions, { userId: 1 });
 
 // Audit logs collection
-db.createCollection('auditlogs');
-db.auditlogs.createIndex({ userId: 1 });
-db.auditlogs.createIndex({ action: 1 });
-db.auditlogs.createIndex({ timestamp: 1 });
-db.auditlogs.createIndex({ resource: 1 });
+createCollectionIfNotExists('auditlogs');
+createIndexIfNotExists(db.auditlogs, { userId: 1 });
+createIndexIfNotExists(db.auditlogs, { action: 1 });
+createIndexIfNotExists(db.auditlogs, { timestamp: 1 });
+createIndexIfNotExists(db.auditlogs, { resource: 1 });
 
 // System metrics collection
-db.createCollection('systemmetrics');
-db.systemmetrics.createIndex({ timestamp: 1 });
-db.systemmetrics.createIndex({ metricType: 1 });
-db.systemmetrics.createIndex({ timestamp: 1, metricType: 1 });
+createCollectionIfNotExists('systemmetrics');
+createIndexIfNotExists(db.systemmetrics, { timestamp: 1 });
+createIndexIfNotExists(db.systemmetrics, { metricType: 1 });
+createIndexIfNotExists(db.systemmetrics, { timestamp: 1, metricType: 1 });
 
 // Cache metadata collection
-db.createCollection('cachemetadata');
-db.cachemetadata.createIndex({ key: 1 }, { unique: true });
-db.cachemetadata.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-db.cachemetadata.createIndex({ createdAt: 1 });
+createCollectionIfNotExists('cachemetadata');
+createIndexIfNotExists(db.cachemetadata, { key: 1 }, { unique: true });
+createIndexIfNotExists(db.cachemetadata, { expiresAt: 1 }, { expireAfterSeconds: 0 });
+createIndexIfNotExists(db.cachemetadata, { createdAt: 1 });
 
-// Insert initial data
+// Insert initial data (idempotent)
+
+// Helper function to create user if not exists
+function createUserIfNotExists(userData) {
+  const existingUser = db.users.findOne({
+    $or: [
+      { email: userData.email },
+      { username: userData.username }
+    ]
+  });
+  
+  if (!existingUser) {
+    db.users.insertOne(userData);
+    print(`Created user: ${userData.username} (${userData.email})`);
+  } else {
+    print(`User ${userData.username} already exists, skipping creation`);
+  }
+}
 
 // Create admin user
-db.users.insertOne({
+createUserIfNotExists({
   _id: ObjectId(),
   username: 'admin',
   email: 'admin@mps.com',
@@ -80,7 +136,7 @@ db.users.insertOne({
 });
 
 // Create test user
-db.users.insertOne({
+createUserIfNotExists({
   _id: ObjectId(),
   username: 'testuser',
   email: 'test@mps.com',
@@ -105,91 +161,24 @@ db.users.insertOne({
   }
 });
 
-// Insert initial system metrics
-db.systemmetrics.insertOne({
-  _id: ObjectId(),
-  metricType: 'system_initialization',
-  value: 1,
-  metadata: {
-    version: '1.0.0',
-    environment: 'development',
-    initializedBy: 'mongo-init-script'
-  },
-  timestamp: new Date()
-});
+// Insert system initialization metric (idempotent)
+const existingMetric = db.systemmetrics.findOne({ metricType: 'system_initialization' });
+if (!existingMetric) {
+  db.systemmetrics.insertOne({
+    _id: ObjectId(),
+    metricType: 'system_initialization',
+    value: 1,
+    metadata: {
+      version: '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      initializedBy: 'mongo-init-script',
+      dbName: dbName
+    },
+    timestamp: new Date()
+  });
+  print('Created system initialization metric');
+} else {
+  print('System initialization metric already exists, skipping creation');
+}
 
-// Create development database for testing
-db = db.getSiblingDB('mps_db_dev');
-
-// Create development user
-db.createUser({
-  user: 'mps_dev_user',
-  pwd: 'mps_dev_password',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'mps_db_dev'
-    }
-  ]
-});
-
-// Create the same collections and indexes for development
-db.createCollection('users');
-db.users.createIndex({ email: 1 }, { unique: true });
-db.users.createIndex({ username: 1 }, { unique: true });
-db.users.createIndex({ createdAt: 1 });
-db.users.createIndex({ isActive: 1 });
-db.users.createIndex({ roles: 1 });
-
-db.createCollection('sessions');
-db.sessions.createIndex({ token: 1 }, { unique: true });
-db.sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-db.sessions.createIndex({ userId: 1 });
-
-db.createCollection('auditlogs');
-db.auditlogs.createIndex({ userId: 1 });
-db.auditlogs.createIndex({ action: 1 });
-db.auditlogs.createIndex({ timestamp: 1 });
-db.auditlogs.createIndex({ resource: 1 });
-
-db.createCollection('systemmetrics');
-db.systemmetrics.createIndex({ timestamp: 1 });
-db.systemmetrics.createIndex({ metricType: 1 });
-db.systemmetrics.createIndex({ timestamp: 1, metricType: 1 });
-
-db.createCollection('cachemetadata');
-db.cachemetadata.createIndex({ key: 1 }, { unique: true });
-db.cachemetadata.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-db.cachemetadata.createIndex({ createdAt: 1 });
-
-// Create test database
-db = db.getSiblingDB('test');
-
-// Create test user
-db.createUser({
-  user: 'test_user',
-  pwd: 'test_password',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'test'
-    }
-  ]
-});
-
-// Create test-e2e database
-db = db.getSiblingDB('test-e2e');
-
-// Create test-e2e user
-db.createUser({
-  user: 'test_e2e_user',
-  pwd: 'test_e2e_password',
-  roles: [
-    {
-      role: 'readWrite',
-      db: 'test-e2e'
-    }
-  ]
-});
-
-print('MongoDB initialization completed successfully!');
+print(`MongoDB initialization completed successfully for database: ${dbName}!`);

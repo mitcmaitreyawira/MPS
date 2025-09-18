@@ -111,12 +111,24 @@ npm run build --filter=backend
 
 ### Environment Variables
 
-Copy the example environment files and configure:
+Copy the unified environment configuration file:
 
 ```bash
-cp apps/backend/.env.example apps/backend/.env
-cp apps/frontend/.env.example apps/frontend/.env
+cp .env.example .env
 ```
+
+This single `.env` file contains all configuration for both development and production. The configuration is automatically shared between:
+- Backend API (`apps/backend/`)
+- Frontend application (`apps/frontend/`)
+- Docker services (`docker-compose.yml`)
+- Development scripts
+
+**Important**: Review and update the following variables for production:
+- `JWT_ACCESS_SECRET` and `JWT_REFRESH_SECRET`
+- `MONGODB_URI` (if using external MongoDB)
+- `CORS_ORIGIN` (set to your frontend domain)
+- `SMTP_*` settings for email functionality
+- `FORCE_HTTPS=true` for production deployments
 
 ### Key Configuration Files
 

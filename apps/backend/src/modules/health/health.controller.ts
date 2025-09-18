@@ -35,6 +35,23 @@ class MetricsResponseDto {
   system!: any;
 }
 
+class DatabaseHealthResponseDto {
+  @ApiProperty({ description: 'Database name' })
+  dbName!: string;
+
+  @ApiProperty({ description: 'Database host (without credentials)' })
+  host!: string;
+
+  @ApiProperty({ description: 'Database connection status' })
+  ok!: boolean;
+
+  @ApiProperty({ description: 'Connection ready state' })
+  readyState?: number;
+
+  @ApiProperty({ description: 'Response time in milliseconds' })
+  responseTimeMs?: number;
+}
+
 /**
  * HealthController provides health check endpoints and performance monitoring.
  * It returns application status, performance metrics, and system information.
@@ -184,6 +201,58 @@ export class HealthController {
       database: dbInfo,
       cache: cacheStats,
       counts,
+    };
+  }
+
+  /**
+   * Database health endpoint - returns database connection info without exposing credentials
+   * @returns Database connection status and basic info
+   */
+  @Get('db')
+  @ApiOperation({ summary: 'Database health check', description: 'Check database connectivity and return connection info without credentials.' })
+  @ApiResponse({ status: 200, description: 'Database health information retrieved successfully', type: DatabaseHealthResponseDto })
+  async getDatabaseHealth(): Promise<DatabaseHealthResponseDto> {
+    const started = Date.now();
+    const db = this.connection.db;
+    let responseTimeMs: number | undefined;
+    let ok = false;
+
+    // Test database connectivity
+     if (db) {
+       try {
+         const pingStart = Date.now();
+         await db.admin().ping();
+         responseTimeMs = Date.now() - pingStart;
+         ok = true;
+       } catch (error) {
+         // Database ping failed, but we still want to return info
+         responseTimeMs = Date.now() - started;
+       }
+     }
+
+    // Extract database name and host from connection
+    const dbName = db?.databaseName || 'unknown';
+    
+    // Parse host from MONGODB_URI without exposing credentials
+    let host = 'unknown';
+    const mongoUri = process.env.MONGODB_URI;
+    if (mongoUri) {
+      try {
+        // Extract host and port from URI, removing credentials
+        const url = new URL(mongoUri);
+        host = `${url.hostname}:${url.port || '27017'}`;
+      } catch (error) {
+        // If URI parsing fails, try to extract from connection
+        host = this.connection.host || 'unknown';
+      }
+    }
+
+    return {
+      dbName,
+      host,
+      ok,
+      readyState: this.connection.readyState,
+      responseTimeMs,
     };
   }
 

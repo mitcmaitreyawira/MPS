@@ -63,6 +63,33 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'System information' }),
     __metadata("design:type", Object)
 ], MetricsResponseDto.prototype, "system", void 0);
+class DatabaseHealthResponseDto {
+    dbName;
+    host;
+    ok;
+    readyState;
+    responseTimeMs;
+}
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Database name' }),
+    __metadata("design:type", String)
+], DatabaseHealthResponseDto.prototype, "dbName", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Database host (without credentials)' }),
+    __metadata("design:type", String)
+], DatabaseHealthResponseDto.prototype, "host", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Database connection status' }),
+    __metadata("design:type", Boolean)
+], DatabaseHealthResponseDto.prototype, "ok", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Connection ready state' }),
+    __metadata("design:type", Number)
+], DatabaseHealthResponseDto.prototype, "readyState", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Response time in milliseconds' }),
+    __metadata("design:type", Number)
+], DatabaseHealthResponseDto.prototype, "responseTimeMs", void 0);
 let HealthController = class HealthController {
     performanceService;
     cacheService;
@@ -173,6 +200,42 @@ let HealthController = class HealthController {
             database: dbInfo,
             cache: cacheStats,
             counts,
+        };
+    }
+    async getDatabaseHealth() {
+        const started = Date.now();
+        const db = this.connection.db;
+        let responseTimeMs;
+        let ok = false;
+        if (db) {
+            try {
+                const pingStart = Date.now();
+                await db.admin().ping();
+                responseTimeMs = Date.now() - pingStart;
+                ok = true;
+            }
+            catch (error) {
+                responseTimeMs = Date.now() - started;
+            }
+        }
+        const dbName = db?.databaseName || 'unknown';
+        let host = 'unknown';
+        const mongoUri = process.env.MONGODB_URI;
+        if (mongoUri) {
+            try {
+                const url = new URL(mongoUri);
+                host = `${url.hostname}:${url.port || '27017'}`;
+            }
+            catch (error) {
+                host = this.connection.host || 'unknown';
+            }
+        }
+        return {
+            dbName,
+            host,
+            ok,
+            readyState: this.connection.readyState,
+            responseTimeMs,
         };
     }
     async getIntegrityReport() {
@@ -289,6 +352,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], HealthController.prototype, "getFullHealth", null);
+__decorate([
+    (0, common_1.Get)('db'),
+    (0, swagger_1.ApiOperation)({ summary: 'Database health check', description: 'Check database connectivity and return connection info without credentials.' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Database health information retrieved successfully', type: DatabaseHealthResponseDto }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], HealthController.prototype, "getDatabaseHealth", null);
 __decorate([
     (0, common_1.Get)('integrity'),
     (0, common_1.UseGuards)(jwt_cookie_guard_1.JwtCookieAuthGuard, roles_guard_1.RolesGuard),

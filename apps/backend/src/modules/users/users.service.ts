@@ -42,14 +42,63 @@ export class UsersService {
   }
 
   /**
-   * Execute database operations without transactions (for compatibility with standalone MongoDB).
+   * Execute database operations with proper transaction safety.
+   * Handles session management, commit/abort logic, and cache invalidation.
+   */
+  private async executeWithTransaction<T>(
+    operation: (session: ClientSession) => Promise<T>,
+    operationName: string,
+    invalidateCache: boolean = true
+  ): Promise<T> {
+    const session = await this.connection.startSession();
+    
+    try {
+      session.startTransaction();
+      
+      const result = await operation(session);
+      
+      await session.commitTransaction();
+      
+      // Invalidate cache after successful transaction
+      if (invalidateCache) {
+        try {
+          await this.cacheHelper.invalidateUsersListCache();
+        } catch (cacheError) {
+          console.warn(`Cache invalidation failed after ${operationName}:`, cacheError);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      console.error(`Failed to execute ${operationName}:`, error);
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  /**
+   * Execute database operations without transactions (fallback for standalone MongoDB).
    */
   private async executeWithoutTransaction<T>(
     operation: () => Promise<T>,
-    operationName: string
+    operationName: string,
+    invalidateCache: boolean = true
   ): Promise<T> {
     try {
-      return await operation();
+      const result = await operation();
+      
+      // Invalidate cache after successful operation
+      if (invalidateCache) {
+        try {
+          await this.cacheHelper.invalidateUsersListCache();
+        } catch (cacheError) {
+          console.warn(`Cache invalidation failed after ${operationName}:`, cacheError);
+        }
+      }
+      
+      return result;
     } catch (error) {
       console.error(`Failed to execute ${operationName}:`, error);
       throw error;
@@ -259,7 +308,8 @@ export class UsersService {
     const timerId = this.performanceHelper.startTimer('createUser', { nisn: (createUserDto as any).nisn || 'no-nisn' });
 
     try {
-      return await this.executeWithoutTransaction(async () => {
+      // Try transaction-based approach first (for replica sets)
+      return await this.executeWithTransaction(async (session) => {
         // Normalize inputs
         if ((createUserDto as any).nisn) {
           (createUserDto as any).nisn = (createUserDto as any).nisn.trim();
@@ -275,10 +325,10 @@ export class UsersService {
         // Transform DTO using helper
         const userData = UserDataTransformer.transformCreateDto(createUserDto, hashedPassword);
 
-        // Create user in database
+        // Create user in database with session
         const createStartTime = Date.now();
         const newUser = new this.userModel(userData);
-        const savedUser = await newUser.save();
+        const savedUser = await newUser.save({ session });
         const createDuration = Date.now() - createStartTime;
         
         this.performanceService.trackDatabaseOperation('create', 'users', createDuration, {
@@ -307,17 +357,65 @@ export class UsersService {
 
         return userResponse as User;
       }, 'createUser');
-    } catch (error) {
-      this.performanceService.endTimer(timerId, { error: true });
-      throw error;
-    } finally {
-      // Invalidate cache after successful transaction
+    } catch (transactionError: any) {
+      // Fallback to non-transaction approach for standalone MongoDB
+      console.warn('Transaction failed, falling back to non-transaction approach:', transactionError?.message || 'Unknown error');
+      
       try {
-        await this.cacheHelper.invalidateUsersListCache();
-        this.performanceService.endTimer(timerId, { success: true });
-      } catch (cacheError) {
-        console.warn('Cache invalidation failed:', cacheError);
+        return await this.executeWithoutTransaction(async () => {
+          // Normalize inputs
+          if ((createUserDto as any).nisn) {
+            (createUserDto as any).nisn = (createUserDto as any).nisn.trim();
+          }
+
+          // Hash password if provided
+          let hashedPassword = '';
+          if (createUserDto.password) {
+            const saltRounds = 12;
+            hashedPassword = await bcrypt.hash(createUserDto.password, saltRounds);
+          }
+
+          // Transform DTO using helper
+          const userData = UserDataTransformer.transformCreateDto(createUserDto, hashedPassword);
+
+          // Create user in database
+          const createStartTime = Date.now();
+          const newUser = new this.userModel(userData);
+          const savedUser = await newUser.save();
+          const createDuration = Date.now() - createStartTime;
+          
+          this.performanceService.trackDatabaseOperation('create', 'users', createDuration, {
+            userId: savedUser._id.toString(),
+            roles: savedUser.roles,
+          });
+
+          // Automatically grant initial points for new students
+          if (savedUser.roles && savedUser.roles.includes('student')) {
+            await this.pointLogsService.create({
+              studentId: savedUser._id.toString(),
+              points: 100,
+              type: PointType.REWARD,
+              category: 'Initial Setup',
+              description: 'Welcome bonus - starting points for new student',
+              addedBy: 'system',
+              academicYear: new Date().getFullYear() + '-' + (new Date().getFullYear() + 1),
+            });
+            
+            console.log(`✅ Initial 100 points granted to new student: ${savedUser.firstName} ${savedUser.lastName} (${(savedUser as any).nisn || savedUser._id})`);
+          }
+
+          // Remove password from response
+          const userResponse = savedUser.toObject();
+          delete (userResponse as any).password;
+
+          return userResponse as User;
+        }, 'createUser');
+      } catch (error) {
+        this.performanceService.endTimer(timerId, { error: true });
+        throw error;
       }
+    } finally {
+      this.performanceService.endTimer(timerId, { success: true });
     }
   }
 
@@ -441,101 +539,202 @@ export class UsersService {
     this.performanceService.startTimer(timerId, { userId: id });
 
     try {
-      // Validate user ID using helper
-      UserValidationHelper.validateUserId(id);
+      // Try transaction-based approach first
+      return await this.executeWithTransaction(async (session) => {
+        // Validate user ID using helper
+        UserValidationHelper.validateUserId(id);
 
-      // Check if user exists
-      const dbStartTime = Date.now();
-      const existingUser = await this.userModel.findById(id).exec();
-      const dbDuration = Date.now() - dbStartTime;
-      
-      this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
-        userId: id,
-        found: !!existingUser,
-      });
-      
-      if (!existingUser) {
-        this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
-        throw new NotFoundException('User not found');
-      }
-
-      // Normalize inputs
-      if ((updateUserDto as any).nisn) {
-        (updateUserDto as any).nisn = (updateUserDto as any).nisn.trim();
-      }
-
-      // Check for NISN conflicts if provided
-      if ((updateUserDto as any).nisn && (updateUserDto as any).nisn !== (existingUser as any).nisn) {
-        const nisnCheckStart = Date.now();
-        const nisnConflict = await this.userModel.findOne({ 
-          nisn: (updateUserDto as any).nisn, 
-          _id: { $ne: id } 
-        }).exec();
-        const nisnCheckDuration = Date.now() - nisnCheckStart;
-
-        this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
-          nisn: (updateUserDto as any).nisn,
-          conflict: !!nisnConflict,
+        // Check if user exists
+        const dbStartTime = Date.now();
+        const existingUser = await this.userModel.findById(id).session(session).exec();
+        const dbDuration = Date.now() - dbStartTime;
+        
+        this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
+          userId: id,
+          found: !!existingUser,
         });
+        
+        if (!existingUser) {
+          this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
+          throw new NotFoundException('User not found');
+        }
 
-        if (nisnConflict) {
-          this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
-          const errorResponse = this.errorResponseService.createDuplicateResourceError(
+        // Normalize inputs
+        if ((updateUserDto as any).nisn) {
+          (updateUserDto as any).nisn = (updateUserDto as any).nisn.trim();
+        }
+
+        // Check for NISN conflicts if provided
+        if ((updateUserDto as any).nisn && (updateUserDto as any).nisn !== (existingUser as any).nisn) {
+          const nisnCheckStart = Date.now();
+          const nisnConflict = await this.userModel.findOne({ 
+            nisn: (updateUserDto as any).nisn, 
+            _id: { $ne: id } 
+          }).session(session).exec();
+          const nisnCheckDuration = Date.now() - nisnCheckStart;
+
+          this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
+            nisn: (updateUserDto as any).nisn,
+            conflict: !!nisnConflict,
+          });
+
+          if (nisnConflict) {
+            this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
+            const errorResponse = this.errorResponseService.createDuplicateResourceError(
+              'User',
+              'nisn',
+              (updateUserDto as any).nisn
+            );
+            throw new ConflictException(errorResponse);
+          }
+        }
+
+        // Transform DTO using helper
+        const updateData = UserDataTransformer.transformUpdateDto(updateUserDto);
+
+        // Update user in database with session
+        const updateStartTime = Date.now();
+        const updatedUser = await this.userModel
+          .findByIdAndUpdate(id, updateData, { new: true, session })
+          .select('-password')
+          .exec();
+        const updateDuration = Date.now() - updateStartTime;
+        
+        this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
+          userId: id,
+          updated: !!updatedUser,
+        });
+        
+        if (!updatedUser) {
+          this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
+          throw new NotFoundException('User not found after update');
+        }
+
+        // Log audit trail for user update
+        await this.auditService.log(
+          'system', // This should be replaced with actual user ID from request context
+          AuditAction.USER_UPDATED,
+          'User',
+          id,
+          {
+            updatedFields: Object.keys(updateData),
+            previousValues: {
+              name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
+              points: (existingUser as any).points,
+              classId: existingUser.classId
+            },
+            newValues: updateData
+          }
+        );
+
+        // Invalidate individual user cache
+        await this.cacheHelper.invalidateUserCache(id);
+
+        this.performanceService.endTimer(timerId, { success: true, userId: id });
+        return updatedUser;
+      }, 'updateUser');
+    } catch (transactionError: any) {
+      // Fallback to non-transaction approach
+      console.warn('Transaction failed for update, falling back to non-transaction approach:', transactionError?.message || 'Unknown error');
+      
+      try {
+        return await this.executeWithoutTransaction(async () => {
+          // Validate user ID using helper
+          UserValidationHelper.validateUserId(id);
+
+          // Check if user exists
+          const dbStartTime = Date.now();
+          const existingUser = await this.userModel.findById(id).exec();
+          const dbDuration = Date.now() - dbStartTime;
+          
+          this.performanceService.trackDatabaseOperation('findById', 'users', dbDuration, {
+            userId: id,
+            found: !!existingUser,
+          });
+          
+          if (!existingUser) {
+            this.performanceService.endTimer(timerId, { error: true, reason: 'user_not_found' });
+            throw new NotFoundException('User not found');
+          }
+
+          // Normalize inputs
+          if ((updateUserDto as any).nisn) {
+            (updateUserDto as any).nisn = (updateUserDto as any).nisn.trim();
+          }
+
+          // Check for NISN conflicts if provided
+          if ((updateUserDto as any).nisn && (updateUserDto as any).nisn !== (existingUser as any).nisn) {
+            const nisnCheckStart = Date.now();
+            const nisnConflict = await this.userModel.findOne({ 
+              nisn: (updateUserDto as any).nisn, 
+              _id: { $ne: id } 
+            }).exec();
+            const nisnCheckDuration = Date.now() - nisnCheckStart;
+
+            this.performanceService.trackDatabaseOperation('findOne', 'users', nisnCheckDuration, {
+              nisn: (updateUserDto as any).nisn,
+              conflict: !!nisnConflict,
+            });
+
+            if (nisnConflict) {
+              this.performanceService.endTimer(timerId, { error: true, reason: 'nisn_conflict' });
+              const errorResponse = this.errorResponseService.createDuplicateResourceError(
+                'User',
+                'nisn',
+                (updateUserDto as any).nisn
+              );
+              throw new ConflictException(errorResponse);
+            }
+          }
+
+          // Transform DTO using helper
+          const updateData = UserDataTransformer.transformUpdateDto(updateUserDto);
+
+          // Update user in database
+          const updateStartTime = Date.now();
+          const updatedUser = await this.userModel
+            .findByIdAndUpdate(id, updateData, { new: true })
+            .select('-password')
+            .exec();
+          const updateDuration = Date.now() - updateStartTime;
+          
+          this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
+            userId: id,
+            updated: !!updatedUser,
+          });
+          
+          if (!updatedUser) {
+            this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
+            throw new NotFoundException('User not found after update');
+          }
+
+          // Log audit trail for user update
+          await this.auditService.log(
+            'system', // This should be replaced with actual user ID from request context
+            AuditAction.USER_UPDATED,
             'User',
-            'nisn',
-            (updateUserDto as any).nisn
+            id,
+            {
+              updatedFields: Object.keys(updateData),
+              previousValues: {
+                name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
+                points: (existingUser as any).points,
+                classId: existingUser.classId
+              },
+              newValues: updateData
+            }
           );
-          throw new ConflictException(errorResponse);
-        }
+
+          // Invalidate individual user cache
+          await this.cacheHelper.invalidateUserCache(id);
+
+          this.performanceService.endTimer(timerId, { success: true, userId: id });
+          return updatedUser;
+        }, 'updateUser');
+      } catch (error) {
+        this.performanceService.endTimer(timerId, { error: true });
+        throw error;
       }
-
-      // Transform DTO using helper
-      const updateData = UserDataTransformer.transformUpdateDto(updateUserDto);
-
-      // Update user in database
-      const updateStartTime = Date.now();
-      const updatedUser = await this.userModel
-        .findByIdAndUpdate(id, updateData, { new: true })
-        .select('-password')
-        .exec();
-      const updateDuration = Date.now() - updateStartTime;
-      
-      this.performanceService.trackDatabaseOperation('findByIdAndUpdate', 'users', updateDuration, {
-        userId: id,
-        updated: !!updatedUser,
-      });
-      
-      if (!updatedUser) {
-        this.performanceService.endTimer(timerId, { error: true, reason: 'update_failed' });
-        throw new NotFoundException('User not found after update');
-      }
-
-      // Log audit trail for user update
-      await this.auditService.log(
-        'system', // This should be replaced with actual user ID from request context
-        AuditAction.USER_UPDATED,
-        'User',
-        id,
-        {
-          updatedFields: Object.keys(updateData),
-          previousValues: {
-            name: existingUser.firstName && existingUser.lastName ? `${existingUser.firstName} ${existingUser.lastName}`.trim() : undefined,
-            points: (existingUser as any).points,
-            classId: existingUser.classId
-          },
-          newValues: updateData
-        }
-      );
-
-      // Invalidate cache
-      await this.cacheHelper.invalidateUserCache(id);
-      await this.cacheHelper.invalidateUsersListCache();
-
-      this.performanceService.endTimer(timerId, { success: true, userId: id });
-      return updatedUser;
-    } catch (error) {
-      this.performanceService.endTimer(timerId, { error: true });
-      throw error;
     }
   }
 

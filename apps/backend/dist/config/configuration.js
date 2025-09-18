@@ -1,12 +1,36 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const common_1 = require("@nestjs/common");
+function validateMongoUri() {
+    const mongoUri = process.env.MONGODB_URI;
+    if (!mongoUri) {
+        throw new Error('MONGODB_URI environment variable is required. ' +
+            'Please set it to your MongoDB connection string (e.g., mongodb://user:pass@host:port/dbname)');
+    }
+    const nodeEnv = process.env.NODE_ENV || 'development';
+    if (nodeEnv !== 'test' && mongoUri.includes('mongodb-memory-server')) {
+        throw new Error('In-memory MongoDB is not allowed in non-test environments. ' +
+            'Please provide a persistent MongoDB URI.');
+    }
+    const logger = new common_1.Logger('DatabaseConfig');
+    try {
+        const url = new URL(mongoUri.replace('mongodb://', 'http://'));
+        const dbName = url.pathname.substring(1) || 'default';
+        const hostInfo = `${url.hostname}:${url.port || '27017'}`;
+        logger.log(`🗄️  Database: ${dbName} @ ${hostInfo}`);
+    }
+    catch (error) {
+        logger.log(`🗄️  Database URI validated (parsing failed, but URI format accepted)`);
+    }
+    return mongoUri;
+}
 exports.default = () => ({
     app: {
         env: process.env.NODE_ENV ?? 'development',
         port: parseInt(process.env.PORT ?? '3001', 10),
     },
     api: { prefix: process.env.API_PREFIX ?? 'api/v1' },
-    database: { uri: process.env.MONGODB_URI ?? 'mongodb://admin:password@localhost:27017/mps_db_unified?authSource=admin' },
+    database: { uri: validateMongoUri() },
     security: { bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10) },
     throttle: {
         ttl: parseInt(process.env.THROTTLE_TTL ?? '60', 10),

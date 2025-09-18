@@ -9,7 +9,7 @@ interface AuthContextType {
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  switchUser?: () => Promise<void>;
+  switchUser: (role: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -83,6 +83,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const switchUser = (role: string): void => {
+    // Create demo users for testing
+    const demoUsers = {
+      admin: {
+        id: 'demo-admin',
+        firstName: 'Demo',
+        lastName: 'Admin',
+        email: 'admin@demo.com',
+        role: UserRole.ADMIN,
+        name: 'Demo Admin'
+      },
+      teacher: {
+        id: 'demo-teacher',
+        firstName: 'Demo',
+        lastName: 'Teacher',
+        email: 'teacher@demo.com',
+        role: UserRole.TEACHER,
+        name: 'Demo Teacher'
+      }
+    };
+
+    const demoUser = demoUsers[role as keyof typeof demoUsers];
+    if (demoUser) {
+      setUser(demoUser);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -90,6 +117,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     login,
     logout,
     refreshUser,
+    switchUser,
   };
 
   return (

@@ -227,7 +227,7 @@ export const UnifiedAwardsManagement: React.FC<UnifiedAwardsManagementProps> = (
   const handleQuickAwardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    const selectedStudent = students.find(s => s.id === studentId);
+    const selectedStudent = students.find(s => (s.id || s._id) === studentId);
     if (!selectedStudent || !reason) {
       setError("Please select a student and provide a reason for the award.");
       return;
@@ -237,7 +237,7 @@ export const UnifiedAwardsManagement: React.FC<UnifiedAwardsManagementProps> = (
     try {
       if (usePresetAward && selectedPresetId) {
         // Use template system for preset awards
-        const preset = presetAwards.find(a => a.id === selectedPresetId);
+        const preset = presetAwards.find(a => (a.id || a._id) === selectedPresetId);
         if (!preset) {
           setError('Selected preset award not found.');
           return;
@@ -349,10 +349,10 @@ export const UnifiedAwardsManagement: React.FC<UnifiedAwardsManagementProps> = (
     
     setAssignmentLoading(true);
     try {
-      const template = presetAwards.find(award => award._id === selectedTemplateId);
+      const template = presetAwards.find(award => (award.id || award._id) === selectedTemplateId);
       if (!template) throw new Error('Template not found');
       
-      const student = students.find(s => s._id === selectedStudentId);
+      const student = students.find(s => (s.id || s._id) === selectedStudentId);
       if (!student) throw new Error('Student not found');
       
       const awardData = {
@@ -524,8 +524,8 @@ export const UnifiedAwardsManagement: React.FC<UnifiedAwardsManagementProps> = (
                     className="w-full"
                   >
                     <option key="select" value="">Select a preset award</option>
-                    {presetAwards.filter(award => award.status === AwardStatus.PENDING).map(award => (
-                      <option key={award.id} value={award.id}>
+                    {presetAwards.map(award => (
+                      <option key={award.id || award._id} value={award.id || award._id}>
                         {award.icon} {award.name} ({award.tier})
                       </option>
                     ))}
@@ -721,8 +721,8 @@ export const UnifiedAwardsManagement: React.FC<UnifiedAwardsManagementProps> = (
                 className="w-full"
               >
                 <option key="choose" value="">Choose a template...</option>
-                {presetAwards.filter(award => !award.recipientId).map(template => (
-                  <option key={template.id || template._id} value={template._id}>
+                {presetAwards.map(template => (
+                  <option key={template.id || template._id} value={template.id || template._id}>
                     {template.icon} {template.name} ({template.tier})
                   </option>
                 ))}

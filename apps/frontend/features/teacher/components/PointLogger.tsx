@@ -28,8 +28,10 @@ export const PointLogger: React.FC<PointLoggerProps> = ({ students, logType, onS
     const [lastLoggedStudentName, setLastLoggedStudentName] = useState('');
 
     const availablePresets = useMemo(() => {
-        const targetActionType = logType === PointType.REWARD ? ActionType.REWARD : ActionType.VIOLATION;
-        return actionPresets.filter(p => p.type === targetActionType && !p.isArchived);
+        const target = logType === PointType.REWARD ? 'REWARD' : 'VIOLATION';
+        return (actionPresets ?? []).filter((p: any) => 
+            String(p?.type ?? '').toUpperCase() === target && !Boolean(p?.isArchived)
+        );
     }, [actionPresets, logType]);
 
     useEffect(() => {
@@ -44,13 +46,13 @@ export const PointLogger: React.FC<PointLoggerProps> = ({ students, logType, onS
     const handlePresetChange = (presetId: string) => {
         setSelectedPresetId(presetId);
         setError(null);
-        const preset = availablePresets.find(p => p.id === presetId);
+        const preset = availablePresets.find((p: any) => String(p.id) === String(presetId));
         if (preset) {
-            setNumPoints(Math.abs(preset.points));
-            setCategory(preset.category);
-            setDescription(preset.description);
+            setNumPoints(Math.abs(Number(preset.points) || 0));
+            setCategory(preset.category || '');
+            setDescription(preset.description || '');
         } else {
-            // Reset to manual entry defaults when "-- Manual Entry --" is selected
+            // Manual entry
             setNumPoints(logType === PointType.REWARD ? 10 : 5);
             setCategory('');
             setDescription('');
@@ -86,9 +88,13 @@ export const PointLogger: React.FC<PointLoggerProps> = ({ students, logType, onS
         setIsLoading(true);
         setError(null);
         try {
+            const signedPoints = logType === PointType.VIOLATION
+                ? -Math.abs(numPoints)
+                : Math.abs(numPoints);
+            
             await addPointLog({
                 studentId,
-                points: logType === PointType.VIOLATION ? -Math.abs(numPoints) : Math.abs(numPoints),
+                points: signedPoints,
                 type: logType,
                 category,
                 description,
@@ -133,8 +139,15 @@ export const PointLogger: React.FC<PointLoggerProps> = ({ students, logType, onS
                 <label className="block text-sm font-medium text-text-secondary mb-1">Select a Preset (Optional)</label>
                 <Select value={selectedPresetId} onChange={e => handlePresetChange(e.target.value)}>
                     <option value="">-- Manual Entry --</option>
-                    {availablePresets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {availablePresets.map((p: any) => (
+                        <option key={String(p.id)} value={String(p.id)}>{p.name}</option>
+                    ))}
                 </Select>
+                {availablePresets.length === 0 && (
+                    <p className="mt-1 text-xs text-text-secondary">
+                        No presets for this type yet. You can still log points manually.
+                    </p>
+                )}
             </div>
              <div>
                 <label className="block text-sm font-medium text-text-secondary mb-1">Points</label>

@@ -1,6 +1,13 @@
 import { PerformanceService } from '../../common/services/performance.service';
 import { CacheService } from '../../common/services/cache.service';
 import { Connection } from 'mongoose';
+declare class DatabaseHealthResponseDto {
+    dbName: string;
+    host: string;
+    ok: boolean;
+    readyState?: number;
+    responseTimeMs?: number;
+}
 export declare class HealthController {
     private readonly performanceService;
     private readonly cacheService;
@@ -56,6 +63,7 @@ export declare class HealthController {
             error: string;
         }>;
     }>;
+    getDatabaseHealth(): Promise<DatabaseHealthResponseDto>;
     getIntegrityReport(): Promise<{
         status: string;
         timestamp: string;
@@ -67,4 +75,5 @@ export declare class HealthController {
         }[];
     }>;
 }
+export {};
 //# sourceMappingURL=health.controller.d.ts.map

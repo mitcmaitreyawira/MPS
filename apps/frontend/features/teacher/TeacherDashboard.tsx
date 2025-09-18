@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
 import { Card } from '../../components/ui/Card';
@@ -41,6 +41,9 @@ const TeacherDashboard: React.FC = () => {
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'myClass' | 'allStudents' | 'profile'>(isHeadTeacher ? 'myClass' : 'allStudents');
 
+    const selectedStudentIdRef = useRef(selectedStudentId);
+    selectedStudentIdRef.current = selectedStudentId;
+
     const fetchTeacherData = useCallback(async () => {
         console.log('TeacherDashboard - fetchTeacherData called');
         console.log('Current user:', user);
@@ -54,7 +57,7 @@ const TeacherDashboard: React.FC = () => {
             console.log('API response received:', result);
             setData(result);
             // If a student was selected but is no longer in the data (e.g., year change), deselect them.
-            if (selectedStudentId && !result.students.find((s: User) => s.id === selectedStudentId)) {
+            if (selectedStudentIdRef.current && !result.students.find((s: User) => s.id === selectedStudentIdRef.current)) {
                 setSelectedStudentId(null);
             }
         } catch (err) {
@@ -63,7 +66,7 @@ const TeacherDashboard: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedYear, selectedStudentId, user]);
+    }, [selectedYear, user]);
 
     useEffect(() => {
         if(user) {
@@ -186,7 +189,7 @@ const TeacherDashboard: React.FC = () => {
                                 <Button type="button" size="md" className="w-full" onClick={() => setLogType(PointType.REWARD)} variant={logType === PointType.REWARD ? 'primary' : 'neutral'}>Reward</Button>
                                 <Button type="button" size="md" className="w-full" onClick={() => setLogType(PointType.VIOLATION)} variant={logType === PointType.VIOLATION ? 'primary' : 'neutral'}>Violation</Button>
                             </div>
-                            <PointLogger students={allUsers} logType={logType} onStudentSelect={setSelectedStudentId} onUpdate={fetchTeacherData} />
+                            <PointLogger students={allStudents} logType={logType} onStudentSelect={setSelectedStudentId} onUpdate={fetchTeacherData} />
                             {selectedStudent && <StudentSnapshot student={selectedStudent} points={data.points} />}
                         </Card>
                     </div>
