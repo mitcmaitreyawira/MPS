@@ -1,0 +1,1 @@
+{"version":3,"file":"drop-username-index.migration.d.ts","sourceRoot":"","sources":["../../../src/database/migrations/drop-username-index.migration.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,UAAU,EAAE,MAAM,UAAU,CAAC;AAEtC,qBACa,0BAA0B;IAGL,OAAO,CAAC,UAAU;IAFlD,OAAO,CAAC,QAAQ,CAAC,MAAM,CAA+C;gBAE9B,UAAU,EAAE,UAAU;IAExD,GAAG,IAAI,OAAO,CAAC,IAAI,CAAC;CA0C3B"}

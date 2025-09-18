@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Registration System Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #545b62;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background-color: #1e7e34;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+        .test-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .results.success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .results.error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .results.info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background-color: #28a745; }
+        .status-error { background-color: #dc3545; }
+        .status-warning { background-color: #ffc107; }
+        .status-info { background-color: #17a2b8; }
+        .nisn-tests {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .nisn-test-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            text-align: center;
+        }
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 User Registration System Test Suite</h1>
+            <p>Interactive testing for the user registration functionality</p>
+        </div>
+
+        <!-- Manual User Creation Test -->
+        <div class="test-section">
+            <h3>👤 Manual User Creation Test</h3>
+            <p>Test user creation with custom data</p>
+            
+            <div class="test-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="user@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="firstName">First Name:</label>
+                    <input type="text" id="firstName" placeholder="John">
+                </div>
+                <div class="form-group">
+                    <label for="lastName">Last Name:</label>
+                    <input type="text" id="lastName" placeholder="Doe">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="SecurePassword123!">
+                </div>
+                <div class="form-group">
+                    <label for="nisn">NISN:</label>
+                    <input type="text" id="nisn" placeholder="Any value allowed">
+                </div>
+                <div class="form-group">
+                    <label for="role">Role:</label>
+                    <select id="role">
+                        <option value="student">Student</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="test-controls">
+                <button class="btn-primary" onclick="testManualUserCreation()">Create User</button>
+                <button class="btn-secondary" onclick="fillRandomData()">Fill Random Data</button>
+                <button class="btn-warning" onclick="clearForm()">Clear Form</button>
+            </div>
+            
+            <div id="manualTestResults" class="results" style="display: none;"></div>
+        </div>
+
+        <!-- NISN Flexibility Tests -->
+        <div class="test-section">
+            <h3>🔤 NISN Flexibility Tests</h3>
+            <p>Test NISN field with various input types</p>
+            
+            <div class="nisn-tests">
+                <div class="nisn-test-item">
+                    <strong>Alphanumeric</strong><br>
+                    <code>ABC123</code>
+                </div>
+                <div class="nisn-test-item">
+                    <strong>Numbers Only</strong><br>
+                    <code>1234567890</code>
+                </div>
+                <div class="nisn-test-item">
+                    <strong>Special Characters</strong><br>
+                    <code>!@#$%^&*()</code>
+                </div>
+                <div class="nisn-test-item">
+                    <strong>Mixed</strong><br>
+                    <code>Test123!@#</code>
+                </div>
+                <div class="nisn-test-item">
+                    <strong>Empty</strong><br>
+                    <code>(empty string)</code>
+                </div>
+                <div class="nisn-test-item">
+                    <strong>Long Text</strong><br>
+                    <code>VeryLongNISNValue123456</code>
+                </div>
+            </div>
+            
+            <div class="test-controls">
+                <button class="btn-success" onclick="testNISNFlexibility()">Test All NISN Types</button>
+            </div>
+            
+            <div id="nisnTestResults" class="results" style="display: none;"></div>
+        </div>
+
+        <!-- Duplicate Detection Tests -->
+        <div class="test-section">
+            <h3>🔍 Duplicate Detection Tests</h3>
+            <p>Test duplicate email validation</p>
+            
+            <div class="test-controls">
+                <button class="btn-primary" onclick="testDuplicateDetection()">Test Duplicate Email</button>
+                <button class="btn-secondary" onclick="testUniqueEmail()">Test Unique Email</button>
+            </div>
+            
+            <div id="duplicateTestResults" class="results" style="display: none;"></div>
+        </div>
+
+        <!-- Error Handling Tests -->
+        <div class="test-section">
+            <h3>⚠️ Error Handling Tests</h3>
+            <p>Test various error scenarios</p>
+            
+            <div class="test-controls">
+                <button class="btn-warning" onclick="testInvalidEmail()">Invalid Email</button>
+                <button class="btn-warning" onclick="testMissingFields()">Missing Fields</button>
+                <button class="btn-warning" onclick="testWeakPassword()">Weak Password</button>
+                <button class="btn-success" onclick="testAllErrorCases()">Test All Errors</button>
+            </div>
+            
+            <div id="errorTestResults" class="results" style="display: none;"></div>
+        </div>
+
+        <!-- System Status -->
+        <div class="test-section">
+            <h3>🔧 System Status</h3>
+            <p>Check system health and connectivity</p>
+            
+            <div class="test-controls">
+                <button class="btn-info btn-secondary" onclick="checkSystemStatus()">Check Status</button>
+                <button class="btn-success" onclick="runFullTestSuite()">Run Full Test Suite</button>
+            </div>
+            
+            <div id="systemStatusResults" class="results" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = '/api/v1';
+        
+        // Utility functions
+        function showResults(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `results ${type}`;
+            element.textContent = content;
+            element.style.display = 'block';
+        }
+        
+        function appendResults(elementId, content, type = 'info') {
+            const element = document.getElementById(elementId);
+            if (element.style.display === 'none') {
+                element.className = `results ${type}`;
+                element.textContent = content;
+            } else {
+                element.textContent += '\n' + content;
+            }
+            element.style.display = 'block';
+        }
+        
+        function generateRandomString(length = 8) {
+            return Math.random().toString(36).substring(2, length + 2);
+        }
+        
+        function generateTestUser(suffix = Date.now()) {
+            return {
+                email: `test.${suffix}@example.com`,
+                firstName: 'Test',
+                lastName: `User${suffix}`,
+                password: 'SecurePassword123!',
+                roles: ['student'],
+                nisn: `TEST${suffix}`.substring(0, 10)
+            };
+        }
+        
+        // API request helper
+        async function apiRequest(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = { message: 'Invalid JSON response' };
+                }
+                
+                return {
+                    status: response.status,
+                    ok: response.ok,
+                    data: data
+                };
+            } catch (error) {
+                return {
+                    status: 0,
+                    ok: false,
+                    data: { message: error.message }
+                };
+            }
+        }
+        
+        // Test functions
+        async function testManualUserCreation() {
+            const email = document.getElementById('email').value;
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const password = document.getElementById('password').value;
+            const nisn = document.getElementById('nisn').value;
+            const role = document.getElementById('role').value;
+            
+            if (!email || !firstName || !lastName || !password) {
+                showResults('manualTestResults', 'Please fill in all required fields (email, firstName, lastName, password)', 'error');
+                return;
+            }
+            
+            const userData = {
+                email,
+                firstName,
+                lastName,
+                password,
+                roles: [role],
+                nisn
+            };
+            
+            showResults('manualTestResults', 'Creating user...', 'info');
+            
+            const result = await apiRequest('/users', {
+                method: 'POST',
+                body: JSON.stringify(userData)
+            });
+            
+            if (result.status === 201) {
+                showResults('manualTestResults', 
+                    `✅ User created successfully!\n` +
+                    `Email: ${email}\n` +
+                    `Name: ${firstName} ${lastName}\n` +
+                    `Role: ${role}\n` +
+                    `NISN: ${nisn || '(empty)'}\n` +
+                    `Status: ${result.status}`, 'success');
+            } else if (result.status === 409) {
+                showResults('manualTestResults', 
+                    `⚠️ User already exists\n` +
+                    `Email: ${email}\n` +
+                    `Error: ${result.data.message || 'Duplicate email'}\n` +
+                    `Status: ${result.status}`, 'warning');
+            } else {
+                showResults('manualTestResults', 
+                    `❌ User creation failed\n` +
+                    `Email: ${email}\n` +
+                    `Error: ${result.data.message || 'Unknown error'}\n` +
+                    `Status: ${result.status}`, 'error');
+            }
+        }
+        
+        function fillRandomData() {
+            const timestamp = Date.now();
+            document.getElementById('email').value = `test.${timestamp}@example.com`;
+            document.getElementById('firstName').value = 'Test';
+            document.getElementById('lastName').value = `User${timestamp}`;
+            document.getElementById('password').value = 'SecurePassword123!';
+            document.getElementById('nisn').value = `TEST${timestamp}`.substring(0, 10);
+            document.getElementById('role').value = 'student';
+        }
+        
+        function clearForm() {
+            document.getElementById('email').value = '';
+            document.getElementById('firstName').value = '';
+            document.getElementById('lastName').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('nisn').value = '';
+            document.getElementById('role').value = 'student';
+        }
+        
+        async function testNISNFlexibility() {
+            const nisnTestCases = [
+                { value: 'ABC123', description: 'Alphanumeric' },
+                { value: '1234567890123456', description: 'Long number' },
+                { value: '!@#$%^&*()', description: 'Special characters' },
+                { value: 'Test123!@#', description: 'Mixed characters' },
+                { value: '', description: 'Empty string' },
+                { value: 'VeryLongNISNValueThatExceedsNormalLength', description: 'Very long text' }
+            ];
+            
+            showResults('nisnTestResults', 'Testing NISN flexibility...', 'info');
+            
+            let results = 'NISN Flexibility Test Results:\n' + '='.repeat(40) + '\n';
+            let passedTests = 0;
+            
+            for (const testCase of nisnTestCases) {
+                const testUser = generateTestUser(`nisn${Date.now()}${Math.random().toString(36).substr(2, 5)}`);
+                testUser.nisn = testCase.value;
+                
+                const result = await apiRequest('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(testUser)
+                });
+                
+                if (result.status === 201) {
+                    results += `✅ ${testCase.description}: "${testCase.value}" - ACCEPTED\n`;
+                    passedTests++;
+                } else if (result.status === 409) {
+                    results += `⚠️  ${testCase.description}: "${testCase.value}" - DUPLICATE (expected)\n`;
+                    passedTests++; // Duplicate is also a valid response
+                } else {
+                    results += `❌ ${testCase.description}: "${testCase.value}" - REJECTED (${result.status})\n`;
+                    results += `   Error: ${result.data.message || 'Unknown error'}\n`;
+                }
+                
+                // Small delay between tests
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+            
+            results += '\n' + '-'.repeat(40) + '\n';
+            results += `Results: ${passedTests}/${nisnTestCases.length} tests passed`;
+            
+            const resultType = passedTests === nisnTestCases.length ? 'success' : 'warning';
+            showResults('nisnTestResults', results, resultType);
+        }
+        
+        async function testDuplicateDetection() {
+            showResults('duplicateTestResults', 'Testing duplicate email detection...', 'info');
+            
+            const testEmail = `duplicate.test.${Date.now()}@example.com`;
+            const testUser = {
+                email: testEmail,
+                firstName: 'Duplicate',
+                lastName: 'Test',
+                password: 'SecurePassword123!',
+                roles: ['student'],
+                nisn: `DUP${Date.now()}`
+            };
+            
+            // Create first user
+            const firstResult = await apiRequest('/users', {
+                method: 'POST',
+                body: JSON.stringify(testUser)
+            });
+            
+            let results = 'Duplicate Email Detection Test:\n' + '='.repeat(35) + '\n';
+            
+            if (firstResult.status === 201) {
+                results += `✅ First user created: ${testEmail}\n`;
+                
+                // Try to create duplicate
+                const duplicateUser = {
+                    ...testUser,
+                    firstName: 'Different',
+                    lastName: 'Name'
+                };
+                
+                const duplicateResult = await apiRequest('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(duplicateUser)
+                });
+                
+                if (duplicateResult.status === 409) {
+                    results += `✅ Duplicate correctly rejected (${duplicateResult.status})\n`;
+                    results += `   Error: ${duplicateResult.data.message || 'Duplicate email'}\n`;
+                    results += '\n🎉 Duplicate detection is working correctly!';
+                    showResults('duplicateTestResults', results, 'success');
+                } else {
+                    results += `❌ Duplicate not detected (${duplicateResult.status})\n`;
+                    results += `   This is a problem - duplicates should be rejected!`;
+                    showResults('duplicateTestResults', results, 'error');
+                }
+            } else {
+                results += `❌ Could not create first user (${firstResult.status})\n`;
+                results += `   Error: ${firstResult.data.message || 'Unknown error'}`;
+                showResults('duplicateTestResults', results, 'error');
+            }
+        }
+        
+        async function testUniqueEmail() {
+            showResults('duplicateTestResults', 'Testing unique email creation...', 'info');
+            
+            const testUser = generateTestUser(`unique${Date.now()}`);
+            
+            const result = await apiRequest('/users', {
+                method: 'POST',
+                body: JSON.stringify(testUser)
+            });
+            
+            if (result.status === 201) {
+                showResults('duplicateTestResults', 
+                    `✅ Unique email accepted\n` +
+                    `Email: ${testUser.email}\n` +
+                    `Status: ${result.status}\n` +
+                    `\n🎉 Unique email creation working correctly!`, 'success');
+            } else {
+                showResults('duplicateTestResults', 
+                    `❌ Unique email rejected\n` +
+                    `Email: ${testUser.email}\n` +
+                    `Error: ${result.data.message || 'Unknown error'}\n` +
+                    `Status: ${result.status}`, 'error');
+            }
+        }
+        
+        async function testInvalidEmail() {
+            const invalidEmails = [
+                'invalid-email',
+                'missing@domain',
+                '@missing-local.com',
+                'spaces in@email.com',
+                'double@@domain.com'
+            ];
+            
+            let results = 'Invalid Email Test Results:\n' + '='.repeat(30) + '\n';
+            let passedTests = 0;
+            
+            for (const email of invalidEmails) {
+                const testUser = {
+                    email: email,
+                    firstName: 'Test',
+                    lastName: 'User',
+                    password: 'SecurePassword123!',
+                    roles: ['student']
+                };
+                
+                const result = await apiRequest('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(testUser)
+                });
+                
+                if (result.status === 400) {
+                    results += `✅ "${email}" - Correctly rejected\n`;
+                    passedTests++;
+                } else {
+                    results += `❌ "${email}" - Not rejected (${result.status})\n`;
+                }
+            }
+            
+            results += `\nResults: ${passedTests}/${invalidEmails.length} tests passed`;
+            const resultType = passedTests === invalidEmails.length ? 'success' : 'warning';
+            showResults('errorTestResults', results, resultType);
+        }
+        
+        async function testMissingFields() {
+            const testCases = [
+                { data: { firstName: 'Test', lastName: 'User', password: 'Pass123!' }, missing: 'email' },
+                { data: { email: 'test@example.com', lastName: 'User', password: 'Pass123!' }, missing: 'firstName' },
+                { data: { email: 'test@example.com', firstName: 'Test', password: 'Pass123!' }, missing: 'lastName' },
+                { data: { email: 'test@example.com', firstName: 'Test', lastName: 'User' }, missing: 'password' }
+            ];
+            
+            let results = 'Missing Fields Test Results:\n' + '='.repeat(30) + '\n';
+            let passedTests = 0;
+            
+            for (const testCase of testCases) {
+                const result = await apiRequest('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(testCase.data)
+                });
+                
+                if (result.status === 400) {
+                    results += `✅ Missing ${testCase.missing} - Correctly rejected\n`;
+                    passedTests++;
+                } else {
+                    results += `❌ Missing ${testCase.missing} - Not rejected (${result.status})\n`;
+                }
+            }
+            
+            results += `\nResults: ${passedTests}/${testCases.length} tests passed`;
+            const resultType = passedTests === testCases.length ? 'success' : 'warning';
+            appendResults('errorTestResults', '\n' + results, resultType);
+        }
+        
+        async function testWeakPassword() {
+            const weakPasswords = [
+                '123',
+                'password',
+                'abc',
+                '12345678',
+                'qwerty'
+            ];
+            
+            let results = 'Weak Password Test Results:\n' + '='.repeat(30) + '\n';
+            let passedTests = 0;
+            
+            for (const password of weakPasswords) {
+                const testUser = {
+                    email: `weak.${Date.now()}.${Math.random()}@example.com`,
+                    firstName: 'Test',
+                    lastName: 'User',
+                    password: password,
+                    roles: ['student']
+                };
+                
+                const result = await apiRequest('/users', {
+                    method: 'POST',
+                    body: JSON.stringify(testUser)
+                });
+                
+                if (result.status === 400) {
+                    results += `✅ "${password}" - Correctly rejected\n`;
+                    passedTests++;
+                } else {
+                    results += `❌ "${password}" - Not rejected (${result.status})\n`;
+                }
+            }
+            
+            results += `\nResults: ${passedTests}/${weakPasswords.length} tests passed`;
+            const resultType = passedTests === weakPasswords.length ? 'success' : 'warning';
+            appendResults('errorTestResults', '\n' + results, resultType);
+        }
+        
+        async function testAllErrorCases() {
+            showResults('errorTestResults', 'Running all error handling tests...', 'info');
+            await testInvalidEmail();
+            await testMissingFields();
+            await testWeakPassword();
+        }
+        
+        async function checkSystemStatus() {
+            showResults('systemStatusResults', 'Checking system status...', 'info');
+            
+            const endpoints = [
+                { path: '/users', method: 'GET', name: 'Users List' },
+                { path: '/users', method: 'POST', name: 'User Creation' },
+                { path: '/auth/login', method: 'POST', name: 'Authentication' },
+                { path: '/awards', method: 'GET', name: 'Awards' }
+            ];
+            
+            let results = 'System Status Check:\n' + '='.repeat(25) + '\n';
+            let workingEndpoints = 0;
+            
+            for (const endpoint of endpoints) {
+                const result = await apiRequest(endpoint.path, {
+                    method: endpoint.method,
+                    body: endpoint.method === 'POST' ? JSON.stringify({}) : undefined
+                });
+                
+                if (result.status >= 200 && result.status < 500) {
+                    results += `✅ ${endpoint.name}: Available (${result.status})\n`;
+                    workingEndpoints++;
+                } else {
+                    results += `❌ ${endpoint.name}: Error (${result.status})\n`;
+                }
+            }
+            
+            results += `\nSystem Health: ${workingEndpoints}/${endpoints.length} endpoints responding`;
+            
+            if (workingEndpoints === endpoints.length) {
+                results += '\n\n🎉 All systems operational!';
+                showResults('systemStatusResults', results, 'success');
+            } else {
+                results += '\n\n⚠️ Some systems may have issues.';
+                showResults('systemStatusResults', results, 'warning');
+            }
+        }
+        
+        async function runFullTestSuite() {
+            showResults('systemStatusResults', 'Running full test suite...', 'info');
+            
+            // Run all tests in sequence
+            await checkSystemStatus();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testNISNFlexibility();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testDuplicateDetection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            await testAllErrorCases();
+            
+            appendResults('systemStatusResults', '\n\n🎉 Full test suite completed! Check individual test sections for detailed results.', 'success');
+        }
+        
+        // Initialize with random data on page load
+        window.addEventListener('load', () => {
+            fillRandomData();
+        });
+    </script>
+</body>
+</html>

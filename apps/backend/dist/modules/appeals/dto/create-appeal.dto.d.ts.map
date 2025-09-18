@@ -1,0 +1,1 @@
+{"version":3,"file":"create-appeal.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/appeals/dto/create-appeal.dto.ts"],"names":[],"mappings":"AAGA,qBAAa,eAAe;IAO1B,UAAU,EAAE,MAAM,CAAC;IAQnB,SAAS,EAAE,MAAM,CAAC;IAUlB,MAAM,EAAE,MAAM,CAAC;IASf,YAAY,CAAC,EAAE,MAAM,CAAC;CACvB"}

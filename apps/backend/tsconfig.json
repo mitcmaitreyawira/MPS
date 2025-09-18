@@ -1,0 +1,38 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    // Enable strict null checking to satisfy exactOptionalPropertyTypes from the root
+    "strictNullChecks": true,
+    // Disable property initialization check because Mongoose models define class
+    // properties without initialisers
+    "strictPropertyInitialization": false,
+    // Disable exact optional property types since the root config sets it but our
+    // inherited config relaxes strict null checks
+    "exactOptionalPropertyTypes": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "forceConsistentCasingInFileNames": false,
+    "noFallthroughCasesInSwitch": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "test",
+    "**/*.spec.ts",
+    "**/*.e2e-spec.ts",
+    "**/*.new.ts"
+  ]
+}

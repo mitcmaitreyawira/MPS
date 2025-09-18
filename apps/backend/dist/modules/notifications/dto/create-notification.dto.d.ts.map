@@ -1,0 +1,1 @@
+{"version":3,"file":"create-notification.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/notifications/dto/create-notification.dto.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,KAAK,EAAE,MAAM,UAAU,CAAC;AAEjC,qBAAa,qBAAqB;IAKhC,MAAM,EAAE,KAAK,CAAC,QAAQ,CAAC;IAKvB,OAAO,EAAE,MAAM,CAAC;IAKhB,MAAM,CAAC,EAAE,OAAO,CAAS;IAIzB,SAAS,CAAC,EAAE,IAAI,CAAC;CAClB"}

@@ -1,0 +1,1 @@
+import{j as e,a2 as t,m as a,t as o,a3 as s,a4 as c,a5 as i}from"./index-JBX9P6Qg.js";const x=({badge:n,className:r})=>{if(n.icon)return e.jsx(t,{iconName:n.icon,className:r});switch(n.tier){case o.GOLD:return e.jsx(i,{className:r});case o.SILVER:return e.jsx(c,{className:r});case o.BRONZE:return e.jsx(s,{className:r});default:return e.jsx(a,{className:r})}};export{x as B};

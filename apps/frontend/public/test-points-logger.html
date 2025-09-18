@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Points Logger Class Display</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Points Logger Class Display Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const resultsDiv = document.getElementById('results');
+            const logDiv = document.createElement('div');
+            logDiv.className = 'log';
+            logDiv.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            resultsDiv.appendChild(logDiv);
+            console.log(message);
+        }
+
+        // Test if we can access the React app's data
+        function testReactAppData() {
+            log('Testing React app data access...');
+            
+            // Check if React DevTools or any global state is available
+            if (window.React) {
+                log('React is available globally');
+            } else {
+                log('React is not available globally');
+            }
+            
+            // Check localStorage for any cached data
+            const localStorageKeys = Object.keys(localStorage);
+            log('LocalStorage keys: ' + localStorageKeys.join(', '));
+            
+            // Check sessionStorage
+            const sessionStorageKeys = Object.keys(sessionStorage);
+            log('SessionStorage keys: ' + sessionStorageKeys.join(', '));
+            
+            // Try to access the main React app
+            const reactRoot = document.getElementById('root');
+            if (reactRoot) {
+                log('React root element found');
+                log('React root innerHTML length: ' + reactRoot.innerHTML.length);
+            } else {
+                log('React root element not found');
+            }
+        }
+
+        // Test API endpoints
+        async function testAPIEndpoints() {
+            log('Testing API endpoints...');
+            
+            try {
+                // Test auth profile
+                const authResponse = await fetch('/api/auth/profile', {
+                    credentials: 'include'
+                });
+                log('Auth API status: ' + authResponse.status);
+                
+                if (authResponse.ok) {
+                    const authData = await authResponse.json();
+                    log('Auth data: ' + JSON.stringify(authData, null, 2));
+                } else {
+                    log('Auth API failed: ' + authResponse.statusText);
+                }
+            } catch (error) {
+                log('Auth API error: ' + error.message);
+            }
+            
+            try {
+                // Test users endpoint
+                const usersResponse = await fetch('/api/users', {
+                    credentials: 'include'
+                });
+                log('Users API status: ' + usersResponse.status);
+                
+                if (usersResponse.ok) {
+                    const usersData = await usersResponse.json();
+                    log('Users data length: ' + (usersData.users ? usersData.users.length : 'No users array'));
+                    
+                    if (usersData.users && usersData.users.length > 0) {
+                        const firstUser = usersData.users[0];
+                        log('First user sample: ' + JSON.stringify({
+                            name: firstUser.name,
+                            firstName: firstUser.firstName,
+                            lastName: firstUser.lastName,
+                            classId: firstUser.classId,
+                            roles: firstUser.roles
+                        }, null, 2));
+                    }
+                } else {
+                    log('Users API failed: ' + usersResponse.statusText);
+                }
+            } catch (error) {
+                log('Users API error: ' + error.message);
+            }
+        }
+
+        // Run tests
+        log('Starting tests...');
+        testReactAppData();
+        testAPIEndpoints();
+        
+        // Check for console logs from the main app
+        log('Check the browser console for additional logs from the main React app.');
+        log('Look for "Forcing mock data for testing class display" message.');
+    </script>
+</body>
+</html>

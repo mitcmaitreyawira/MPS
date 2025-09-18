@@ -1,0 +1,9 @@
+export declare const capitalize: (str: string) => string;
+export declare const camelCase: (str: string) => string;
+export declare const kebabCase: (str: string) => string;
+export declare const snakeCase: (str: string) => string;
+export declare const truncate: (str: string, length: number) => string;
+export declare const generateSlug: (str: string) => string;
+export declare const maskEmail: (email: string) => string;
+export declare const generateRandomString: (length: number) => string;
+//# sourceMappingURL=string.utils.d.ts.map

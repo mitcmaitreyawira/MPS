@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Users Data</title>
+</head>
+<body>
+    <h1>Debug Users Data</h1>
+    <div id="results"></div>
+    
+    <script>
+        // Check if we can access the React app's data
+        setTimeout(() => {
+            // Try to access React DevTools or global state
+            console.log('Checking for React app data...');
+            
+            // Check localStorage for any cached data
+            const keys = Object.keys(localStorage);
+            console.log('LocalStorage keys:', keys);
+            
+            // Check sessionStorage
+            const sessionKeys = Object.keys(sessionStorage);
+            console.log('SessionStorage keys:', sessionKeys);
+            
+            // Try to make API calls directly
+            fetch('http://localhost:3000/api/v1/auth/profile', {
+                credentials: 'include'
+            })
+            .then(response => {
+                console.log('Auth profile response:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Current user:', data);
+                document.getElementById('results').innerHTML += `<h2>Current User</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                
+                // Now try to fetch users
+                return fetch('http://localhost:3000/api/v1/users?role=student&includeArchived=true', {
+                    credentials: 'include'
+                });
+            })
+            .then(response => {
+                console.log('Users API response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Users data:', data);
+                document.getElementById('results').innerHTML += `<h2>Students Data</h2><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML += `<h2>Error</h2><p>${error.message}</p>`;
+            });
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+export declare const formatDate: (date: Date, format?: string) => string;
+export declare const isValidDate: (date: any) => boolean;
+export declare const addDays: (date: Date, days: number) => Date;
+export declare const addHours: (date: Date, hours: number) => Date;
+export declare const addMinutes: (date: Date, minutes: number) => Date;
+export declare const getTimeAgo: (date: Date) => string;
+export declare const isDateInRange: (date: Date, startDate: Date, endDate: Date) => boolean;
+export declare const getStartOfDay: (date: Date) => Date;
+export declare const getEndOfDay: (date: Date) => Date;
+//# sourceMappingURL=date.utils.d.ts.map

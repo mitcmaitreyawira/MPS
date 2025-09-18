@@ -1,0 +1,4 @@
+
+> @template/shared@1.0.0 build /Users/gilbert177777gmail.com/Desktop/Launch/mps_launch 4/packages/shared
+> tsc -p tsconfig.json
+

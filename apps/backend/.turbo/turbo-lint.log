@@ -1,0 +1,6 @@
+
+> @template/backend@1.0.0 lint /Users/gilbert177777gmail.com/Desktop/Launch/mps_launch 4/apps/backend
+> eslint "{src,apps,libs,test}/**/*.ts" --fix
+
+sh: eslint: command not found
+[41m[30m ELIFECYCLE [39m[49m [31mCommand failed.[39m

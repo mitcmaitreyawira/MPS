@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Class Information Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; background: white; border-radius: 5px; }
+        .student-item { padding: 10px; margin: 5px 0; border: 1px solid #ddd; background: #f9f9f9; border-radius: 3px; }
+        .class-info { color: #666; font-size: 0.9em; font-style: italic; }
+        .no-class { color: #d32f2f; font-weight: bold; }
+        .has-class { color: #388e3c; font-weight: bold; }
+        .log { background: #e3f2fd; padding: 8px; margin: 5px 0; border-left: 4px solid #2196f3; }
+        .error { background: #ffebee; border-left-color: #f44336; }
+        .success { background: #e8f5e8; border-left-color: #4caf50; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Test Class Information Fix</h1>
+    
+    <div class="test-section">
+        <h2>API Test Results</h2>
+        <div id="api-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Students with Class Information</h2>
+        <div id="students-list"></div>
+    </div>
+
+    <script>
+        function addLog(message, type = 'log') {
+            const resultsDiv = document.getElementById('api-results');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            resultsDiv.appendChild(logDiv);
+        }
+        
+        async function testClassInformation() {
+            addLog('Testing /api/users endpoint for class information...', 'log');
+            
+            try {
+                const response = await fetch('/api/users', {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                addLog(`API Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`API returned ${data.users ? data.users.length : 'no users array'} users`, 'success');
+                    
+                    if (data.users && data.users.length > 0) {
+                        const students = data.users.filter(u => u.roles && u.roles.includes('student'));
+                        addLog(`Found ${students.length} students in API data`, 'success');
+                        
+                        const studentsWithClass = students.filter(s => s.classId && (s.classId.name || s.classId._id));
+                        addLog(`Students with class information: ${studentsWithClass.length}/${students.length}`, studentsWithClass.length > 0 ? 'success' : 'error');
+                        
+                        displayStudents(students);
+                        
+                        // Log sample data structure
+                        if (students.length > 0) {
+                            addLog('Sample student data structure:', 'log');
+                            const sample = students[0];
+                            addLog(`Name: ${sample.firstName} ${sample.lastName}`, 'log');
+                            addLog(`ClassId type: ${typeof sample.classId}`, 'log');
+                            addLog(`ClassId value: ${JSON.stringify(sample.classId)}`, 'log');
+                            addLog(`Roles: [${sample.roles.join(', ')}]`, 'log');
+                        }
+                    } else {
+                        addLog('No users found in API response', 'error');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    addLog(`API Error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`API Test Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function displayStudents(students) {
+            const studentsDiv = document.getElementById('students-list');
+            studentsDiv.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentsDiv.innerHTML = '<p>No students found</p>';
+                return;
+            }
+            
+            students.forEach((student, index) => {
+                const studentDiv = document.createElement('div');
+                studentDiv.className = 'student-item';
+                
+                const hasClass = student.classId && (student.classId.name || (typeof student.classId === 'object' && student.classId._id));
+                const classDisplay = hasClass ? 
+                    (student.classId.name || `Class ID: ${student.classId._id || student.classId}`) : 
+                    'No class information';
+                
+                studentDiv.innerHTML = `
+                    <div><strong>${student.firstName} ${student.lastName}</strong></div>
+                    <div class="class-info ${hasClass ? 'has-class' : 'no-class'}">${classDisplay}</div>
+                    <div style="font-size: 0.8em; color: #666;">
+                        Raw classId: ${JSON.stringify(student.classId)}<br>
+                        Roles: [${student.roles.join(', ')}]
+                    </div>
+                `;
+                studentsDiv.appendChild(studentDiv);
+            });
+        }
+        
+        // Run the test
+        addLog('Starting class information test...', 'log');
+        testClassInformation();
+        
+        // Test every 5 seconds to see if data changes
+        setInterval(() => {
+            addLog('Re-testing API...', 'log');
+            testClassInformation();
+        }, 5000);
+    </script>
+</body>
+</html>

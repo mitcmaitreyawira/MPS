@@ -1,0 +1,10 @@
+2025-09-18T08:03:48.795206Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/frontend/components/auth/Login.tsx")}
+2025-09-18T08:03:48.795233Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("mps-gamified-classroom-management"), path: AnchoredSystemPathBuf("apps/frontend") }}))
+2025-09-18T08:03:51.296219Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/frontend/components/auth/Login.tsx"), AnchoredSystemPathBuf(".turbo/daemon/cf0c6e8733f53cf7-turbo.log.2025-09-18"), AnchoredSystemPathBuf(".turbo/daemon/cf0c6e8733f53cf7-turbo.log.2025-09-17")}
+2025-09-18T08:03:51.296228Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("mps-gamified-classroom-management"), path: AnchoredSystemPathBuf("apps/frontend") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-09-18T08:03:51.296288Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-09-18T08:05:48.895637Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/frontend/components/auth/Login.tsx")}
+2025-09-18T08:05:48.895644Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("mps-gamified-classroom-management"), path: AnchoredSystemPathBuf("apps/frontend") }}))
+2025-09-18T08:05:48.996014Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/frontend/components/auth/Login.tsx")}
+2025-09-18T08:05:48.996022Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("mps-gamified-classroom-management"), path: AnchoredSystemPathBuf("apps/frontend") }}))
+2025-09-18T08:05:48.996094Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun

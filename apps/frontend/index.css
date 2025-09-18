@@ -1,0 +1,54 @@
+/* Default styling for the MPS application.  This file exists so the
+ * reference in index.html does not 404 during development.  You can
+ * extend or replace these styles as needed.
+ */
+
+/* Set up a sensible default height and background color on html/body */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background-color: var(--bg, #f8fafc);
+  color: var(--fg, #1e293b);
+}
+
+/* Enhanced UI animations for better user experience */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Hide scrollbars for horizontal scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

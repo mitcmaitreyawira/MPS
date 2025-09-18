@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Button Test - SearchableSingleUserSelector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .test-log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .refresh-monitor {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .refresh-monitor.refreshed {
+            background: #dc3545;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="refresh-monitor" id="refreshMonitor">No Refresh Detected</div>
+    
+    <div class="test-container">
+        <h1>🧪 Clear Button Test</h1>
+        <p>This test verifies that the clear selection button (×) in SearchableSingleUserSelector doesn't cause page refresh when clicked inside a form.</p>
+        
+        <div class="status info">
+            <strong>Test Status:</strong> Ready to test clear button functionality
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🎯 Test Instructions</h2>
+        <ol>
+            <li><strong>Open Main App:</strong> Click the button below to open the main application</li>
+            <li><strong>Navigate to Point Logging:</strong> Go to the teacher dashboard and find the point logging form</li>
+            <li><strong>Select a User:</strong> Click on the student dropdown and select any user</li>
+            <li><strong>Test Clear Button:</strong> Click the × (clear) button next to the selected user</li>
+            <li><strong>Verify No Refresh:</strong> The page should NOT refresh, and the user selection should be cleared</li>
+            <li><strong>Check Monitor:</strong> The refresh monitor (top-right) should remain green</li>
+        </ol>
+        
+        <button onclick="openMainApp()">Open Main App</button>
+        <button onclick="runClearButtonTest()">Run Automated Clear Test</button>
+        <button onclick="resetTest()">Reset Test</button>
+    </div>
+
+    <div class="test-container">
+        <h2>📋 Test Results</h2>
+        <div id="testResults" class="test-log">
+            <div>🔍 Clear Button Test Log:</div>
+            <div>- Waiting for test to begin...</div>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🔧 Technical Details</h2>
+        <p><strong>Issue Fixed:</strong> Added <code>e.preventDefault()</code> and <code>e.stopPropagation()</code> to the clear selection button's onClick handler.</p>
+        <p><strong>Root Cause:</strong> Buttons inside forms default to <code>type="submit"</code> unless explicitly set to <code>type="button"</code>.</p>
+        <p><strong>Solution:</strong> Event handlers now prevent default form submission behavior.</p>
+        
+        <div class="status warning">
+            <strong>Expected Behavior:</strong> Clear button should remove user selection without triggering form submission or page refresh.
+        </div>
+    </div>
+
+    <script>
+        let refreshDetected = false;
+        let testStartTime = Date.now();
+        
+        let userInteractionStarted = false;
+        
+        // Monitor for unexpected page refresh (not hot-reload)
+        window.addEventListener('beforeunload', function(e) {
+            // Only count as problematic refresh if user was interacting with the form
+            if (userInteractionStarted && !e.target.location.href.includes('test-')) {
+                refreshDetected = true;
+                localStorage.setItem('unexpectedRefresh', 'true');
+                localStorage.setItem('refreshTime', Date.now().toString());
+            }
+        });
+        
+        // Check if page was refreshed unexpectedly
+        window.addEventListener('load', function() {
+            const wasRefreshed = localStorage.getItem('unexpectedRefresh');
+            const refreshTime = localStorage.getItem('refreshTime');
+            
+            if (wasRefreshed === 'true' && refreshTime) {
+                const timeDiff = Date.now() - parseInt(refreshTime);
+                if (timeDiff < 5000) { // Within 5 seconds
+                    document.getElementById('refreshMonitor').textContent = '❌ UNEXPECTED PAGE REFRESH DETECTED!';
+                    document.getElementById('refreshMonitor').classList.add('refreshed');
+                    logTest('❌ CRITICAL: Unexpected page refresh detected! Clear button test FAILED.');
+                    logTest(`⏰ Refresh occurred ${timeDiff}ms ago`);
+                }
+                localStorage.removeItem('unexpectedRefresh');
+                localStorage.removeItem('refreshTime');
+            }
+        });
+        
+        function logTest(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('testResults');
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function openMainApp() {
+            userInteractionStarted = true;
+            logTest('🚀 Opening main application for clear button testing...');
+            logTest('👤 User interaction started - monitoring for unexpected refreshes');
+            logTest('📍 Navigate to Teacher Dashboard → Point Logging');
+            logTest('🎯 Test the clear (×) button after selecting a user');
+            window.open('http://localhost:5173/', '_blank');
+        }
+        
+        function runClearButtonTest() {
+            logTest('🤖 Starting automated clear button test...');
+            logTest('⚠️  This test requires manual interaction with the main app');
+            logTest('1. Select a user in the dropdown');
+            logTest('2. Click the × (clear) button');
+            logTest('3. Verify no page refresh occurs');
+            logTest('4. Check that user selection is cleared');
+            
+            // Reset refresh monitor
+            document.getElementById('refreshMonitor').textContent = 'Monitoring for Refresh...';
+            document.getElementById('refreshMonitor').classList.remove('refreshed');
+            
+            setTimeout(() => {
+                if (!refreshDetected) {
+                    logTest('✅ No automatic refresh detected during test period');
+                    logTest('🔍 Manual verification still required');
+                }
+            }, 10000);
+        }
+        
+        function resetTest() {
+            document.getElementById('testResults').innerHTML = `
+                <div>🔍 Clear Button Test Log:</div>
+                <div>- Test reset, ready to begin...</div>
+            `;
+            document.getElementById('refreshMonitor').textContent = 'No Refresh Detected';
+            document.getElementById('refreshMonitor').classList.remove('refreshed');
+            refreshDetected = false;
+            testStartTime = Date.now();
+            logTest('🔄 Test environment reset');
+        }
+        
+        // Initialize
+        logTest('🏁 Clear button test environment initialized');
+        logTest('💡 Click "Open Main App" to begin testing');
+        logTest('ℹ️  Note: Vite hot-reload refreshes are normal and not counted as errors.');
+    </script>
+</body>
+</html>

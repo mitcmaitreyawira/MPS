@@ -1,0 +1,1 @@
+{"version":3,"file":"create-teacher-report.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/teacher-reports/dto/create-teacher-report.dto.ts"],"names":[],"mappings":"AAGA,qBAAa,sBAAsB;IAQjC,iBAAiB,CAAC,EAAE,MAAM,CAAC;IAO3B,WAAW,EAAG,OAAO,CAAC;IAQtB,eAAe,EAAG,MAAM,CAAC;IASzB,OAAO,EAAG,MAAM,CAAC;IASjB,YAAY,CAAC,EAAE,MAAM,CAAC;CACvB"}

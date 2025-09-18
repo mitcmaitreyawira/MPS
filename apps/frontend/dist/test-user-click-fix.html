@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Click Fix Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .refresh-monitor {
+            padding: 15px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 16px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        .refresh-monitor.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .refresh-monitor.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 User Click Fix Test</h1>
+    <p>This test verifies that clicking on users in the SearchableSingleUserSelector no longer causes page refreshes.</p>
+    
+    <div class="test-container">
+        <h2>Test Instructions:</h2>
+        <ol>
+            <li>Navigate to the main application at <a href="/" target="_blank">http://localhost:5173/</a></li>
+            <li>Go to the "Log Points & Medals" section</li>
+            <li>Click on the student search dropdown</li>
+            <li>Click on any student name in the dropdown</li>
+            <li>Observe if the page refreshes or stays stable</li>
+        </ol>
+    </div>
+    
+    <div class="test-container">
+        <h2>Expected Behavior:</h2>
+        <div class="status success">
+            ✅ Student should be selected without page refresh<br>
+            ✅ Dropdown should close after selection<br>
+            ✅ Selected student should appear in the input field<br>
+            ✅ No console errors should appear
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Previous Issue:</h2>
+        <div class="status error">
+            ❌ Clicking on students caused unwanted page refreshes<br>
+            ❌ Form submission was triggered accidentally
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Fix Applied:</h2>
+        <div class="status info">
+            🔧 Changed from onClick to onMouseDown event for user selection<br>
+            🔧 Added e.preventDefault() and e.stopPropagation() to user clicks<br>
+            🔧 Added onKeyDown handler to prevent Enter key form submission<br>
+            🔧 Ensured proper event handling in SearchableSingleUserSelector<br>
+            🔧 Prevents form submission when clicking on user items or pressing Enter
+        </div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Refresh Monitor:</h2>
+        <div id="refreshMonitor" class="refresh-monitor">Initializing...</div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test Log:</h2>
+        <div class="log" id="testLog">
+            <div>Test page loaded successfully at: <span id="timestamp"></span></div>
+            <div>Ready for manual testing...</div>
+        </div>
+    </div>
+    
+    <script>
+        let refreshCount = 0;
+        let testStartTime = Date.now();
+        let userInteractionStarted = false;
+        
+        // Monitor for unexpected page refresh (not hot-reload)
+        window.addEventListener('beforeunload', function(e) {
+            // Only count as problematic refresh if user was interacting with the form
+            if (userInteractionStarted && !e.target.location.href.includes('test-')) {
+                refreshCount++;
+                updateRefreshMonitor();
+                logMessage('WARNING: Unexpected page refresh detected during user interaction!', 'error');
+                localStorage.setItem('unexpectedRefresh', 'true');
+            }
+        });
+        
+        // Check if page was refreshed unexpectedly
+        window.addEventListener('load', function() {
+            const wasRefreshed = localStorage.getItem('unexpectedRefresh');
+            if (wasRefreshed) {
+                refreshCount++;
+                updateRefreshMonitor();
+                logMessage('Unexpected page refresh was detected (form submission issue)', 'error');
+                localStorage.removeItem('unexpectedRefresh');
+            } else {
+                logMessage('Page loaded normally (no unexpected refreshes)', 'success');
+            }
+        });
+        
+        function updateRefreshMonitor() {
+            const monitor = document.getElementById('refreshMonitor');
+            if (refreshCount > 0) {
+                monitor.textContent = `⚠️ ${refreshCount} Unexpected Refresh(es) Detected`;
+                monitor.className = 'refresh-monitor error';
+            } else {
+                monitor.textContent = '✅ No Unexpected Refreshes Detected';
+                monitor.className = 'refresh-monitor success';
+            }
+        }
+        
+        // Mark when user starts interacting with the main app
+        function markUserInteractionStarted() {
+            userInteractionStarted = true;
+            logMessage('User interaction started - monitoring for unexpected refreshes', 'info');
+        }
+        
+        function logMessage(message, type = 'info') {
+            const log = document.getElementById('testLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.innerHTML = `<span style="color: ${type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue'}">[${timestamp}] ${message}</span>`;
+            log.appendChild(div);
+            log.scrollTop = log.scrollHeight;
+        }
+        
+        function openMainApp() {
+            markUserInteractionStarted();
+            logMessage('Opening main application for testing...', 'info');
+            window.open('/', '_blank');
+        }
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadTime = new Date().toLocaleTimeString();
+            logMessage(`Test page loaded at ${loadTime}`, 'info');
+            logMessage('Ready for testing! Open the main app and test user selection.', 'info');
+            logMessage('Note: Vite hot-reload refreshes are normal and not counted as errors.', 'info');
+            updateRefreshMonitor();
+        });
+        
+        // Add button to open main app
+        document.body.insertAdjacentHTML('beforeend', `
+            <div class="test-container">
+                <h2>🚀 Quick Actions</h2>
+                <button onclick="openMainApp()" style="background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Open Main App</button>
+                <button onclick="location.reload()" style="background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer;">Reset Test</button>
+            </div>
+        `);
+        
+        // Set timestamp
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        console.log('User click fix test page loaded. Navigate to main app to test user selection.');
+    </script>
+</body>
+</html>

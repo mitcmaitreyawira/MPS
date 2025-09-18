@@ -1,0 +1,1 @@
+{"version":3,"file":"audit-log.entity.d.ts","sourceRoot":"","sources":["../../../../src/modules/audit-logs/entities/audit-log.entity.ts"],"names":[],"mappings":"AAEA,qBAAa,QAAQ;IAKnB,EAAE,EAAG,MAAM,CAAC;IAMZ,MAAM,EAAG,MAAM,CAAC;IAMhB,MAAM,EAAG,MAAM,CAAC;IAMhB,QAAQ,EAAG,MAAM,CAAC;IAMlB,OAAO,EAAG,MAAM,CAAC,MAAM,EAAE,GAAG,CAAC,CAAC;IAM9B,SAAS,EAAG,IAAI,CAAC;CAClB"}

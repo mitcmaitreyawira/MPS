@@ -1,0 +1,29 @@
+2025-08-31T07:39:03.485435Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie"), AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie")}
+2025-08-31T07:39:03.485442Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:39:03.586491Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log"), AnchoredSystemPathBuf(".turbo/cookies/2.cookie")}
+2025-08-31T07:39:03.586499Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:39:03.787220Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log")}
+2025-08-31T07:39:03.787228Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:39:03.887144Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log")}
+2025-08-31T07:39:03.887158Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:39:03.901751Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-08-31T07:40:12.287315Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("_tmp_41716_38388d85c15c5c71f052a075c4bd17bd"), AnchoredSystemPathBuf("")}
+2025-08-31T07:40:12.287322Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:40:15.486690Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".husky/_/.gitignore"), AnchoredSystemPathBuf(".husky/_/husky.sh")}
+2025-08-31T07:40:15.486703Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:40:18.386906Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/3.cookie")}
+2025-08-31T07:40:18.386914Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:40:18.486319Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/4.cookie"), AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log")}
+2025-08-31T07:40:18.486327Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:40:18.687162Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log")}
+2025-08-31T07:40:18.687170Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:40:18.786045Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/.turbo/turbo-lint.log")}
+2025-08-31T07:40:18.786054Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:40:18.786192Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-08-31T07:40:39.886394Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/5.cookie")}
+2025-08-31T07:40:39.886402Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-31T07:40:44.986587Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist/tsconfig.tsbuildinfo")}
+2025-08-31T07:40:44.986600Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:40:45.087597Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/backend/dist/tsconfig.tsbuildinfo")}
+2025-08-31T07:40:45.087604Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@template/backend"), path: AnchoredSystemPathBuf("apps/backend") }}))
+2025-08-31T07:40:45.087732Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun

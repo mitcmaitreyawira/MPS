@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Points Logger Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; background: #f9f9f9; }
+        .user-item { padding: 10px; margin: 5px 0; border: 1px solid #ddd; background: white; }
+        .class-info { color: #666; font-size: 0.9em; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Debug Points Logger Data</h1>
+    
+    <div class="debug-section">
+        <h2>Console Output</h2>
+        <div id="console-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Mock Data Test</h2>
+        <div id="mock-data-test"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logDiv = document.createElement('div');
+            logDiv.textContent = args.join(' ');
+            logDiv.style.margin = '5px 0';
+            logDiv.style.padding = '5px';
+            logDiv.style.background = '#fff';
+            logDiv.style.border = '1px solid #ddd';
+            consoleOutput.appendChild(logDiv);
+        };
+        
+        // Test mock data structure
+        const mockUsers = [
+            {
+                id: '1',
+                firstName: 'Gilbert',
+                lastName: 'Gilbert',
+                name: 'Gilbert Gilbert',
+                roles: ['student'],
+                role: 'student',
+                nisn: 'GG001',
+                classId: 'class1',
+                className: 'Class 7A',
+                isArchived: false,
+                points: 100,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            },
+            {
+                id: '2',
+                firstName: 'Juyo',
+                lastName: 'Juyo',
+                name: 'Juyo Juyo',
+                roles: ['student'],
+                role: 'student',
+                nisn: 'JJ002',
+                classId: 'class2',
+                className: 'Class 7B',
+                isArchived: false,
+                points: 85,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            },
+            {
+                id: '3',
+                firstName: 'Mayna',
+                lastName: 'revina',
+                name: 'Mayna revina',
+                roles: ['student'],
+                role: 'student',
+                nisn: 'MR003',
+                classId: 'class1',
+                className: 'Class 7A',
+                isArchived: false,
+                points: 92,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            }
+        ];
+        
+        console.log('Mock users data:');
+        console.log(JSON.stringify(mockUsers, null, 2));
+        
+        // Test filtering logic
+        const students = mockUsers.filter(user => {
+            const hasStudentRole = (user.roles && user.roles.includes('student')) || user.role === 'student';
+            return hasStudentRole && !user.isArchived;
+        });
+        
+        console.log('Filtered students:');
+        console.log(JSON.stringify(students, null, 2));
+        
+        // Display in UI
+        const mockDataDiv = document.getElementById('mock-data-test');
+        students.forEach(student => {
+            const userDiv = document.createElement('div');
+            userDiv.className = 'user-item';
+            userDiv.innerHTML = `
+                <div><strong>${student.firstName} ${student.lastName}</strong></div>
+                ${student.className ? `<div class="class-info">Class: ${student.className}</div>` : '<div class="class-info">No class info</div>'}
+                <div class="class-info">Role: ${student.role}, Roles: [${student.roles.join(', ')}]</div>
+            `;
+            mockDataDiv.appendChild(userDiv);
+        });
+        
+        // Check if the main React app is loading this data
+        setTimeout(() => {
+            console.log('Checking for React app console logs...');
+            console.log('Look for "Forcing mock data for testing class display" in the main console.');
+            console.log('Also look for "All users:" and "Filtered students:" logs.');
+        }, 2000);
+    </script>
+</body>
+</html>

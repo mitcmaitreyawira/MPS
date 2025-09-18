@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug API URL</title>
+</head>
+<body>
+    <h1>API URL Debug</h1>
+    <div id="result"></div>
+    <script>
+        // Simulate the same environment variable resolution as the frontend
+        const API_URL = 'http://localhost:3000/api/v1' || '/api';
+        console.log('Resolved API_URL:', API_URL);
+        
+        document.getElementById('result').innerHTML = `
+            <p><strong>API_URL:</strong> ${API_URL}</p>
+            <p><strong>Testing connection...</strong></p>
+        `;
+        
+        // Test the health endpoint
+        fetch(`${API_URL}/health`)
+            .then(response => {
+                console.log('Health check response:', response);
+                document.getElementById('result').innerHTML += `
+                    <p><strong>Health check:</strong> ${response.status} ${response.statusText}</p>
+                `;
+                return response.json();
+            })
+            .then(data => {
+                console.log('Health check data:', data);
+                document.getElementById('result').innerHTML += `
+                    <p><strong>Health data:</strong> ${JSON.stringify(data)}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Health check error:', error);
+                document.getElementById('result').innerHTML += `
+                    <p><strong>Health check error:</strong> ${error.message}</p>
+                `;
+            });
+        
+        // Test the login endpoint
+        setTimeout(() => {
+            fetch(`${API_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ nisn: 'test', password: 'test' })
+            })
+            .then(response => {
+                console.log('Login test response:', response);
+                document.getElementById('result').innerHTML += `
+                    <p><strong>Login test:</strong> ${response.status} ${response.statusText}</p>
+                `;
+            })
+            .catch(error => {
+                console.error('Login test error:', error);
+                document.getElementById('result').innerHTML += `
+                    <p><strong>Login test error:</strong> ${error.message}</p>
+                `;
+            });
+        }, 1000);
+    </script>
+</body>
+</html>

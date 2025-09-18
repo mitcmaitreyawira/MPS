@@ -1,0 +1,1 @@
+{"version":3,"file":"update-appeal.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/appeals/dto/update-appeal.dto.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,eAAe,EAAE,MAAM,qBAAqB,CAAC;AACtD,OAAO,EAAE,YAAY,EAAE,MAAM,2BAA2B,CAAC;;AAEzD,qBAAa,eAAgB,SAAQ,oBAA4B;IAS/D,MAAM,CAAC,EAAE,YAAY,CAAC;IAStB,UAAU,CAAC,EAAE,MAAM,CAAC;IAWpB,WAAW,CAAC,EAAE,MAAM,CAAC;CACtB"}

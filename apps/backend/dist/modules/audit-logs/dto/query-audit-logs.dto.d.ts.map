@@ -1,0 +1,1 @@
+{"version":3,"file":"query-audit-logs.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/audit-logs/dto/query-audit-logs.dto.ts"],"names":[],"mappings":"AAIA,qBAAa,iBAAiB;IAU5B,IAAI,CAAC,EAAE,MAAM,CAAK;IAalB,KAAK,CAAC,EAAE,MAAM,CAAM;IAQpB,MAAM,CAAC,EAAE,MAAM,CAAC;IAQhB,MAAM,CAAC,EAAE,MAAM,CAAC;CACjB"}

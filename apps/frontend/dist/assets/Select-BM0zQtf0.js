@@ -1,0 +1,1 @@
+import{j as o}from"./index-JBX9P6Qg.js";const n=({children:e,className:s,...r})=>o.jsx("select",{className:`shadow-sm appearance-none border border-border rounded-lg w-full py-2 px-3 bg-surface text-text-primary leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent ${s}`,...r,children:e});export{n as S};

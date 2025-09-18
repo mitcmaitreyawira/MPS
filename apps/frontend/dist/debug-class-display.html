@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Class Display Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; background: white; border-radius: 5px; }
+        .user-item { padding: 10px; margin: 5px 0; border: 1px solid #ddd; background: #f9f9f9; border-radius: 3px; }
+        .class-info { color: #666; font-size: 0.9em; font-style: italic; }
+        .no-class { color: #d32f2f; font-weight: bold; }
+        .has-class { color: #388e3c; font-weight: bold; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; font-size: 12px; }
+        .log { background: #e3f2fd; padding: 8px; margin: 5px 0; border-left: 4px solid #2196f3; }
+        .error { background: #ffebee; border-left-color: #f44336; }
+        .success { background: #e8f5e8; border-left-color: #4caf50; }
+    </style>
+</head>
+<body>
+    <h1>Debug Class Display Issue</h1>
+    
+    <div class="debug-section">
+        <h2>Console Logs</h2>
+        <div id="console-output"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>React App Data Check</h2>
+        <div id="react-data"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>API Test</h2>
+        <div id="api-test"></div>
+    </div>
+
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleOutput = document.getElementById('console-output');
+        
+        function addLog(message, type = 'log') {
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            logDiv.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            consoleOutput.appendChild(logDiv);
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLog(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLog(args.join(' '), 'error');
+        };
+        
+        // Test API endpoints
+        async function testAPI() {
+            const apiTestDiv = document.getElementById('api-test');
+            
+            try {
+                addLog('Testing /api/users endpoint...', 'log');
+                const response = await fetch('/api/users', {
+                    credentials: 'include',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                addLog(`API Response Status: ${response.status}`, response.ok ? 'success' : 'error');
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addLog(`API returned ${data.users ? data.users.length : 'no users array'} users`, 'success');
+                    
+                    if (data.users && data.users.length > 0) {
+                        const students = data.users.filter(u => u.roles && u.roles.includes('student'));
+                        addLog(`Found ${students.length} students in API data`, 'success');
+                        
+                        students.forEach((student, index) => {
+                            const userDiv = document.createElement('div');
+                            userDiv.className = 'user-item';
+                            
+                            const hasClass = student.classId && (student.classId.name || (typeof student.classId === 'object' && student.classId._id));
+                            const classDisplay = hasClass ? 
+                                (student.classId.name || `Class ID: ${student.classId._id || student.classId}`) : 
+                                'No class information';
+                            
+                            userDiv.innerHTML = `
+                                <div><strong>${student.firstName} ${student.lastName}</strong></div>
+                                <div class="class-info ${hasClass ? 'has-class' : 'no-class'}">${classDisplay}</div>
+                                <div style="font-size: 0.8em; color: #666;">
+                                    Raw classId: ${JSON.stringify(student.classId)}<br>
+                                    Roles: [${student.roles.join(', ')}]
+                                </div>
+                            `;
+                            apiTestDiv.appendChild(userDiv);
+                            
+                            if (index < 3) { // Log first 3 students
+                                addLog(`Student ${index + 1}: ${student.firstName} ${student.lastName}, classId: ${JSON.stringify(student.classId)}`, hasClass ? 'success' : 'error');
+                            }
+                        });
+                    } else {
+                        addLog('No users found in API response', 'error');
+                    }
+                } else {
+                    const errorText = await response.text();
+                    addLog(`API Error: ${errorText}`, 'error');
+                }
+            } catch (error) {
+                addLog(`API Test Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Check React app data
+        function checkReactData() {
+            const reactDataDiv = document.getElementById('react-data');
+            
+            // Try to access React DevTools or global state
+            setTimeout(() => {
+                addLog('Checking for React app data...', 'log');
+                
+                // Check if there are any global React-related objects
+                const reactRoot = document.getElementById('root');
+                if (reactRoot) {
+                    addLog('React root found', 'success');
+                    
+                    // Try to find any data in the DOM
+                    const dropdowns = document.querySelectorAll('[role="listbox"], .dropdown, select');
+                    addLog(`Found ${dropdowns.length} potential dropdown elements`, 'log');
+                    
+                    // Look for student names in the DOM
+                    const textContent = document.body.textContent;
+                    const hasStudentNames = textContent.includes('Gilbert') || textContent.includes('Juyo') || textContent.includes('Mayna');
+                    addLog(`Student names found in DOM: ${hasStudentNames}`, hasStudentNames ? 'success' : 'error');
+                    
+                    // Check for class information in DOM
+                    const hasClassInfo = textContent.includes('Class:') || textContent.includes('7A') || textContent.includes('7B');
+                    addLog(`Class information found in DOM: ${hasClassInfo}`, hasClassInfo ? 'success' : 'error');
+                } else {
+                    addLog('React root not found', 'error');
+                }
+            }, 2000);
+        }
+        
+        // Run tests
+        addLog('Starting debug session...', 'log');
+        testAPI();
+        checkReactData();
+        
+        // Monitor for console logs from main app
+        addLog('Monitoring console for React app logs...', 'log');
+        addLog('Look for "Processing API user" and "Users loaded from API" messages', 'log');
+        
+        // Check every 3 seconds for new data
+        setInterval(() => {
+            const currentTime = new Date().toLocaleTimeString();
+            const bodyText = document.body.textContent;
+            
+            if (bodyText.includes('Class:')) {
+                addLog(`${currentTime}: Class information detected in DOM!`, 'success');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>
