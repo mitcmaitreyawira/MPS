@@ -47,9 +47,29 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app_module_1 = require("./app.module");
 const class_validator_1 = require("class-validator");
 const drop_username_index_migration_1 = require("./database/migrations/drop-username-index.migration");
+const devlock_service_1 = require("./common/services/devlock.service");
 async function bootstrap() {
     const tempLogger = new common_1.Logger('BootstrapDebug');
     tempLogger.log('🚀 BOOTSTRAP FUNCTION STARTED');
+    try {
+        const { ConfigService } = await Promise.resolve().then(() => __importStar(require('@nestjs/config')));
+        const configService = new ConfigService();
+        const devLockService = new devlock_service_1.DevLockService(configService);
+        await devLockService.acquireLock();
+        process.on('SIGINT', async () => {
+            await devLockService.onModuleDestroy();
+            process.exit(0);
+        });
+        process.on('SIGTERM', async () => {
+            await devLockService.onModuleDestroy();
+            process.exit(0);
+        });
+    }
+    catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        tempLogger.error(`❌ DevLock failed: ${errorMessage}`);
+        process.exit(1);
+    }
     const nodeEnv = process.env.NODE_ENV || 'development';
     const isProduction = nodeEnv === 'production';
     if (isProduction) {
@@ -251,7 +271,7 @@ async function bootstrap() {
     catch (error) {
         logger.warn('Migration execution failed, continuing startup...');
     }
-    const port = configService.get('app.port', 3001);
+    const port = configService.get('app.port', 3002);
     await app.listen(port);
     logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);
     if (configService.get('ENABLE_SWAGGER', true)) {

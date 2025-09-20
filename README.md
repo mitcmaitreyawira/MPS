@@ -34,6 +34,123 @@ npm run docker:dev
 npm run docker:down
 ```
 
+## 🔒 DevLock System
+
+The DevLock system prevents multiple backend instances from running simultaneously, eliminating conflicts with uploads, sessions, and database operations.
+
+### Features
+- **Port Preflight Check**: Fails fast if port 3002 is already in use
+- **PID Lockfile**: Prevents multiple host processes on the same machine
+- **Redis Mutex**: Blocks host-vs-Docker duplication across processes/hosts
+- **Docker Profiles**: Backend container only starts when explicitly requested
+
+### Development Workflows
+
+#### Local Development (pnpm)
+```bash
+# Start backend only (recommended for development)
+pnpm run dev:backend
+
+# Or start full development environment
+pnpm run dev
+```
+
+#### Docker-Only Development
+```bash
+# Start infrastructure only (MongoDB + Redis)
+docker-compose -f docker-compose.dev.yml up mongodb redis
+
+# Start backend with explicit profile
+docker-compose -f docker-compose.dev.yml --profile backend up
+
+# Or start everything with full profile
+docker-compose -f docker-compose.dev.yml --profile full up
+```
+
+#### Production Deployment
+```bash
+# Start with backend profile (recommended)
+docker-compose --profile backend up -d
+
+# Or start everything
+docker-compose --profile full up -d
+```
+
+### Configuration
+
+DevLock is controlled via environment variables in `.env`:
+
+```bash
+# DevLock System
+DEVLOCK=true                    # Enable/disable DevLock (default: true)
+PORT=3002                       # Backend port (default: 3002)
+REDIS_HOST=localhost            # Redis host for mutex
+REDIS_PORT=6379                 # Redis port
+REDIS_PASSWORD=redispassword    # Redis password
+```
+
+### Disabling DevLock
+
+To temporarily disable DevLock (not recommended for development):
+
+```bash
+# In .env file
+DEVLOCK=false
+
+# Or as environment variable
+DEVLOCK=false pnpm run dev:backend
+```
+
+### Troubleshooting
+
+#### Port Already in Use
+```bash
+# Find process using port 3002
+lsof -ti:3002
+
+# Kill the process
+kill -9 $(lsof -ti:3002)
+
+# Or use a different port
+PORT=3003 pnpm run dev:backend
+```
+
+#### Stale PID Lock
+```bash
+# Remove stale lockfile
+rm -f /tmp/mps-backend.pid
+
+# Restart backend
+pnpm run dev:backend
+```
+
+#### Redis Unavailable
+```bash
+# Start Redis with Docker
+docker-compose -f docker-compose.dev.yml up redis -d
+
+# Or disable DevLock temporarily
+DEVLOCK=false pnpm run dev:backend
+
+# Check Redis connection
+redis-cli -h localhost -p 6379 -a redispassword ping
+```
+
+#### Multiple Instances Still Running
+```bash
+# Check all Node.js processes
+ps aux | grep node
+
+# Kill all Node.js processes (use with caution)
+pkill -f "node.*backend"
+
+# Check Docker containers
+docker ps | grep backend
+
+# Stop Docker backend
+docker-compose -f docker-compose.dev.yml stop backend-dev
+```
+
 ## 📁 Project Structure
 
 ```

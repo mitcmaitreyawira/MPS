@@ -11,10 +11,33 @@ import type { Request, Response, NextFunction } from 'express';
 import { AppModule } from './app.module';
 import { useContainer } from 'class-validator';
 import { DropUsernameIndexMigration } from './database/migrations/drop-username-index.migration';
+import { DevLockService } from './common/services/devlock.service';
 
 async function bootstrap() {
   const tempLogger = new Logger('BootstrapDebug');
   tempLogger.log('🚀 BOOTSTRAP FUNCTION STARTED');
+  
+  // DevLock: Prevent multiple backend instances
+  try {
+    const { ConfigService } = await import('@nestjs/config');
+    const configService = new ConfigService();
+    const devLockService = new DevLockService(configService);
+    await devLockService.acquireLock();
+    
+    // Ensure DevLock is released on process termination
+    process.on('SIGINT', async () => {
+      await devLockService.onModuleDestroy();
+      process.exit(0);
+    });
+    process.on('SIGTERM', async () => {
+      await devLockService.onModuleDestroy();
+      process.exit(0);
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    tempLogger.error(`❌ DevLock failed: ${errorMessage}`);
+    process.exit(1);
+  }
   
   // Production safety rails - validate critical environment variables
   const nodeEnv = process.env.NODE_ENV || 'development';
@@ -279,7 +302,7 @@ async function bootstrap() {
     logger.warn('Migration execution failed, continuing startup...');
   }
 
-  const port = configService.get('app.port', 3001);
+  const port = configService.get('app.port', 3002);
   await app.listen(port);
 
   logger.log(`🚀 Application is running on: http://localhost:${port}/${apiPrefix}`);

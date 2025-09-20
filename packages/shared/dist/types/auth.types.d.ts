@@ -1,9 +1,9 @@
 export interface LoginCredentials {
-    email: string;
+    nisn: string;
     password: string;
 }
 export interface RegisterCredentials {
-    email: string;
+    nisn: string;
     password: string;
     confirmPassword: string;
     firstName: string;

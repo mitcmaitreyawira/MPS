@@ -9,6 +9,15 @@ declare const _default: () => {
     database: {
         uri: string;
     };
+    redis: {
+        host: string;
+        port: number;
+        password: string | undefined;
+    };
+    devlock: {
+        enabled: boolean;
+        lockTTL: number;
+    };
     security: {
         bcryptRounds: number;
     };

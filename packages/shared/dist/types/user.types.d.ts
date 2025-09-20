@@ -1,7 +1,8 @@
 import { BaseEntity } from './common.types';
 import { Role } from './auth.types';
 export interface User extends BaseEntity {
-    email: string;
+    nisn: string;
+    email?: string;
     firstName: string;
     lastName: string;
     avatar?: string;
@@ -55,7 +56,8 @@ export interface PushNotificationSettings {
 export type AccountStatus = 'active' | 'inactive' | 'suspended' | 'pending';
 export type Gender = 'male' | 'female' | 'other' | 'prefer-not-to-say';
 export interface CreateUserRequest {
-    email: string;
+    nisn: string;
+    email?: string;
     password: string;
     firstName: string;
     lastName: string;

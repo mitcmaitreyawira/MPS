@@ -37,10 +37,19 @@ function validateMongoUri(): string {
 export default () => ({
   app: {
     env: process.env.NODE_ENV ?? 'development',
-    port: parseInt(process.env.PORT ?? '3001', 10),
+    port: parseInt(process.env.PORT ?? '3002', 10),
   },
   api: { prefix: process.env.API_PREFIX ?? 'api/v1' },
   database: { uri: validateMongoUri() },
+  redis: {
+    host: process.env.REDIS_HOST ?? 'localhost',
+    port: parseInt(process.env.REDIS_PORT ?? '6379', 10),
+    password: process.env.REDIS_PASSWORD,
+  },
+  devlock: {
+    enabled: (process.env.DEVLOCK ?? 'true') === 'true',
+    lockTTL: parseInt(process.env.DEVLOCK_TTL ?? '30', 10),
+  },
   security: { bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS ?? '12', 10) },
   throttle: {
     ttl: parseInt(process.env.THROTTLE_TTL ?? '60', 10),

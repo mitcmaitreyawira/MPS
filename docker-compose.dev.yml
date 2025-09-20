@@ -31,27 +31,32 @@ services:
     networks:
       - mps-dev-network
 
-  # Backend API (Development)
+  # Backend API (Development) - Only starts with explicit profile
   backend-dev:
+    profiles: ["backend", "full"]
     build:
       context: .
       target: base
     container_name: mps-backend-dev
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${PORT:-3002}:${PORT:-3002}"
       - "9229:9229" # Debug port
     environment:
       NODE_ENV: ${NODE_ENV:-development}
-      PORT: ${PORT:-3000}
+      PORT: ${PORT:-3002}
+      API_PREFIX: ${API_PREFIX:-api/v1}
       MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME:-admin}:${MONGO_INITDB_ROOT_PASSWORD:-password}@mongodb:27017/${MONGO_INITDB_DATABASE:-mps_db_unified}?authSource=admin
       REDIS_HOST: redis
       REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD:-redispassword}
+      DEVLOCK: ${DEVLOCK:-false}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev_access_secret_change_me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_change_me}
+      UPLOAD_DEST: ${UPLOAD_DEST:-./uploads}
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      API_PREFIX: ${API_PREFIX:-api/v1}
       BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
       THROTTLE_TTL: ${THROTTLE_TTL:-60}
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}

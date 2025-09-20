@@ -16,7 +16,7 @@ export declare class PasswordManagementController {
         success: boolean;
         data: {
             password: string;
-            strength: "weak" | "medium" | "strong";
+            strength: "strong" | "weak" | "medium";
             length: number;
         };
     }>;
