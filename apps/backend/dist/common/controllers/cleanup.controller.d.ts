@@ -11,10 +11,10 @@ export declare class CleanupController {
     cleanupFailedOperations(): Promise<{
         message: string;
     }>;
-    performMaintenance(): Promise<{
+    performMaintenance(confirm?: string): Promise<{
         message: string;
     }>;
-    performManualCleanup(metricsOlderThanDays?: number, syncOlderThanDays?: number, dryRun?: boolean): Promise<{
+    performManualCleanup(metricsOlderThanDays?: number, syncOlderThanDays?: number, dryRun?: boolean, confirm?: string): Promise<{
         message: string;
         result: {
             metricsDeleted: number;

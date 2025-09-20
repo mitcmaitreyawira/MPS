@@ -51,7 +51,7 @@ PerformanceMetricSchema.index({ operation: 1, timestamp: -1 });
 PerformanceMetricSchema.index({ timestamp: -1 });
 PerformanceMetricSchema.index({ isError: 1, timestamp: -1 });
 PerformanceMetricSchema.index({ 'metadata.userId': 1, timestamp: -1 });
-PerformanceMetricSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 }); // Auto-delete after 30 days
+// TTL index managed by EphemeralCollectionsService
 
 @Schema({ timestamps: true })
 export class RequestTimer {
@@ -84,6 +84,6 @@ export const RequestTimerSchema = SchemaFactory.createForClass(RequestTimer);
 // Indexes for request timers
 RequestTimerSchema.index({ timerId: 1 }, { unique: true });
 RequestTimerSchema.index({ status: 1, startTime: -1 });
-RequestTimerSchema.index({ createdAt: 1 }, { expireAfterSeconds: 24 * 60 * 60 }); // Auto-delete after 24 hours
+// TTL index managed by EphemeralCollectionsService
 
 export type RequestTimerDocument = RequestTimer & Document;

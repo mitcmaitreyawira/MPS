@@ -46,15 +46,7 @@ export class DevLockService implements OnModuleInit {
 
       const locksCollection = db.collection('instanceLocks');
       
-      // Create TTL index if it doesn't exist
-      try {
-        await locksCollection.createIndex(
-          { expiresAt: 1 },
-          { expireAfterSeconds: 0, background: true }
-        );
-      } catch (indexError) {
-        // Index might already exist, ignore error
-      }
+      // TTL index managed by EphemeralCollectionsService
 
       const mongoUri = this.configService.get<string>('database.uri');
       const dbName = db.databaseName;

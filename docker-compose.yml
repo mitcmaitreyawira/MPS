@@ -13,7 +13,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-password}
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE:-mps_db_unified}
     volumes:
-      - mongodb_data:/data/db
+      - mongo_data:/data/db
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - mps-network
@@ -72,6 +72,8 @@ services:
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
       CACHE_TTL: ${CACHE_TTL:-300}
       ENABLE_SWAGGER: ${ENABLE_SWAGGER:-false}
+    volumes:
+      - backend_uploads:/app/uploads
     depends_on:
       mongodb:
         condition: service_healthy
@@ -110,9 +112,11 @@ services:
       start_period: 30s
 
 volumes:
-  mongodb_data:
+  mongo_data:
     driver: local
   redis_data:
+    driver: local
+  backend_uploads:
     driver: local
 
 networks:

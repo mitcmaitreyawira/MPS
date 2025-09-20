@@ -29,6 +29,7 @@ import { IntegrationModule } from './modules/integration/integration.module';
 import { PointLogsModule } from './modules/points/point-logs.module';
 // import { CleanupModule } from './common/modules/cleanup.module';
 import { StructuredLoggerService } from './common/services/logger.service';
+import { EphemeralCollectionsService } from './common/services/ephemeral-collections.service';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -115,6 +116,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
   ],
   providers: [
     StructuredLoggerService,
+    EphemeralCollectionsService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,

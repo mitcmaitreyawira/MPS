@@ -53,4 +53,4 @@ export const SyncOperationSchema = SchemaFactory.createForClass(SyncOperation);
 SyncOperationSchema.index({ status: 1, timestamp: 1 });
 SyncOperationSchema.index({ operationId: 1 }, { unique: true });
 SyncOperationSchema.index({ entity: 1, type: 1 });
-SyncOperationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 }); // Auto-delete after 7 days
+// TTL index managed by EphemeralCollectionsService

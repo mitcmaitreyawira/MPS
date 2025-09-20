@@ -5,14 +5,19 @@ export declare class AdminController {
     constructor(adminService: AdminService);
     bulkDeleteUsers(body: {
         userIds: string[];
+        confirmDeletion: string;
     }): Promise<{
         deletedCount: number;
     }>;
-    deleteBadge(badgeId: string): Promise<{
+    deleteBadge(badgeId: string, body: {
+        confirmDeletion: string;
+    }): Promise<{
         deletedBadge: string;
         affectedUsers: number;
     }>;
-    emergencySystemReset(): Promise<{
+    emergencySystemReset(body: {
+        confirmReset: string;
+    }): Promise<{
         message: string;
         timestamp: string;
     }>;

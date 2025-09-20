@@ -28,15 +28,24 @@ let AdminController = AdminController_1 = class AdminController {
         this.adminService = adminService;
     }
     async bulkDeleteUsers(body) {
+        if (body.confirmDeletion !== 'yes-i-know') {
+            throw new Error('Safety guard: confirmDeletion must be "yes-i-know" to proceed with this dangerous operation');
+        }
         this.logger.warn(`Admin bulk delete users requested for ${body.userIds.length} users`);
         return this.adminService.bulkDeleteUsers(body.userIds);
     }
-    async deleteBadge(badgeId) {
-        this.logger.warn(`Admin delete badge requested for badge: ${badgeId}`);
+    async deleteBadge(badgeId, body) {
+        if (body.confirmDeletion !== 'yes-i-know') {
+            throw new Error('Safety guard: confirmDeletion must be "yes-i-know" to proceed with this dangerous operation');
+        }
+        this.logger.warn(`Admin delete badge requested: ${badgeId}`);
         return this.adminService.deleteBadge(badgeId);
     }
-    async emergencySystemReset() {
-        this.logger.error('NUCLEAR OPTION: Emergency system reset requested');
+    async emergencySystemReset(body) {
+        if (body.confirmReset !== 'yes-i-know-this-is-destructive') {
+            throw new Error('Safety guard: confirmReset must be "yes-i-know-this-is-destructive" to proceed with this nuclear operation');
+        }
+        this.logger.error('EMERGENCY SYSTEM RESET REQUESTED');
         return this.adminService.emergencySystemReset();
     }
 };
@@ -59,8 +68,13 @@ __decorate([
                     items: { type: 'string' },
                     description: 'Array of user IDs to delete',
                 },
+                confirmDeletion: {
+                    type: 'string',
+                    description: 'Must be "yes-i-know" to confirm this dangerous operation',
+                    example: 'yes-i-know'
+                },
             },
-            required: ['userIds'],
+            required: ['userIds', 'confirmDeletion'],
         },
     }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Users deleted successfully' }),
@@ -72,7 +86,7 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "bulkDeleteUsers", null);
 __decorate([
-    (0, common_1.Delete)('badge/:badgeId'),
+    (0, common_1.Post)('badge/:badgeId/delete'),
     (0, roles_decorator_1.Roles)('admin'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
     (0, rate_limit_guard_1.RateLimit)({ windowMs: 60000, maxRequests: 10 }),
@@ -81,12 +95,26 @@ __decorate([
         description: 'Permanently delete a badge and revoke it from all users.',
     }),
     (0, swagger_1.ApiParam)({ name: 'badgeId', description: 'Badge ID to delete' }),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: {
+                confirmDeletion: {
+                    type: 'string',
+                    description: 'Must be "yes-i-know" to confirm this dangerous operation',
+                    example: 'yes-i-know'
+                },
+            },
+            required: ['confirmDeletion'],
+        },
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Badge deleted successfully' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Badge not found' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Insufficient permissions' }),
     __param(0, (0, common_1.Param)('badgeId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "deleteBadge", null);
 __decorate([
@@ -98,10 +126,24 @@ __decorate([
         summary: 'Emergency system reset (NUCLEAR OPTION)',
         description: 'Emergency system reset. This will reset most system data. USE ONLY IN EMERGENCIES.',
     }),
+    (0, swagger_1.ApiBody)({
+        schema: {
+            type: 'object',
+            properties: {
+                confirmReset: {
+                    type: 'string',
+                    description: 'Must be "yes-i-know-this-is-destructive" to confirm this nuclear operation',
+                    example: 'yes-i-know-this-is-destructive'
+                },
+            },
+            required: ['confirmReset'],
+        },
+    }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Emergency reset completed' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Insufficient permissions' }),
+    __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AdminController.prototype, "emergencySystemReset", null);
 exports.AdminController = AdminController = AdminController_1 = __decorate([

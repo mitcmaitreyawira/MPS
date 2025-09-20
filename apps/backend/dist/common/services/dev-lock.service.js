@@ -48,11 +48,6 @@ let DevLockService = DevLockService_1 = class DevLockService {
                 throw new Error('Database connection not available');
             }
             const locksCollection = db.collection('instanceLocks');
-            try {
-                await locksCollection.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, background: true });
-            }
-            catch (indexError) {
-            }
             const mongoUri = this.configService.get('database.uri');
             const dbName = db.databaseName;
             const lockKey = `backend-${dbName}`;

@@ -81,5 +81,4 @@ exports.SyncOperationSchema = mongoose_1.SchemaFactory.createForClass(SyncOperat
 exports.SyncOperationSchema.index({ status: 1, timestamp: 1 });
 exports.SyncOperationSchema.index({ operationId: 1 }, { unique: true });
 exports.SyncOperationSchema.index({ entity: 1, type: 1 });
-exports.SyncOperationSchema.index({ createdAt: 1 }, { expireAfterSeconds: 7 * 24 * 60 * 60 });
 //# sourceMappingURL=sync-operation.schema.js.map

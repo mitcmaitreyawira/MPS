@@ -23,6 +23,7 @@
     "migration:run": "typeorm migration:run",
     "migration:revert": "typeorm migration:revert",
     "seed:run": "ts-node src/database/seeders/run-seeders.ts",
+    "seed:demo": "ts-node src/scripts/seed-demo-users.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

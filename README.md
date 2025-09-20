@@ -191,6 +191,97 @@ npm run test --filter=backend
 npm run test --filter=frontend
 ```
 
+### Data Persistence Testing
+
+The project includes specialized CI scripts to verify data persistence across server restarts and deployments:
+
+#### `test-data-persistence.js`
+
+Tests that user data persists after server restarts by:
+1. Creating a test user via API with admin authentication
+2. Verifying the user exists in the database
+3. Simulating server restart (stopping/starting backend)
+4. Verifying the user still exists after restart
+5. Cleaning up test data
+
+```bash
+# Run data persistence test
+node test-data-persistence.js
+
+# Prerequisites:
+# - Backend server running on localhost:3000
+# - Admin user (ADMIN001) configured
+# - MongoDB accessible
+```
+
+#### `verify-data-persistence.js`
+
+Comprehensive verification of the MPS system's data persistence capabilities:
+1. **Docker Volume Persistence** - Checks MongoDB persistent volumes
+2. **Database Connection** - Verifies MongoDB health and connectivity
+3. **User Data Integrity** - Confirms existing user data is accessible
+4. **Backup Capability** - Tests backup script functionality
+5. **Restore Capability** - Validates restore operations
+6. **Environment Configuration** - Checks persistence-related settings
+
+```bash
+# Run persistence verification
+node verify-data-persistence.js
+
+# Prerequisites:
+# - Docker containers running (mps-mongodb-dev)
+# - Backup scripts available in ./scripts/
+# - Proper MongoDB authentication configured
+```
+
+#### CI Integration
+
+These scripts are designed for CI/CD pipelines and can be integrated into GitHub Actions:
+
+```yaml
+# Example CI step
+- name: Test Data Persistence
+  run: |
+    npm run docker:dev &
+    sleep 30  # Wait for services to start
+    node test-data-persistence.js
+    node verify-data-persistence.js
+```
+
+#### Test Results
+
+Both scripts provide detailed output with:
+- ✅ Success indicators for passed tests
+- ❌ Error indicators for failed tests
+- 📋 Informational logs with timestamps
+- 🧪 Test progress indicators
+- Overall persistence score (verify-data-persistence.js)
+
+#### Troubleshooting
+
+**Common Issues:**
+- **Admin login fails**: Ensure ADMIN001 user exists with password 'Admin123!'
+- **Database connection fails**: Check MongoDB container status and credentials
+- **CSRF token issues**: Verify backend CSRF protection is properly configured
+- **Docker volume not found**: Ensure MongoDB container uses named volumes
+
+**Debug Commands:**
+```bash
+# Check backend health
+curl http://localhost:3000/api/v1/health/db
+
+# Verify MongoDB container
+docker ps | grep mongodb
+
+# Check Docker volumes
+docker volume ls | grep mongodb
+
+# Test admin login manually
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"nisn":"ADMIN001","password":"Admin123!"}'
+```
+
 ## 🧱 Backend Conventions and Notes
 
 - **Audit logs**: Use `AuditLogsService.create(dto, userId, userName)` everywhere.

@@ -48,6 +48,7 @@ const app_module_1 = require("./app.module");
 const class_validator_1 = require("class-validator");
 const drop_username_index_migration_1 = require("./database/migrations/drop-username-index.migration");
 const devlock_service_1 = require("./common/services/devlock.service");
+const persistence_1 = require("./config/persistence");
 async function bootstrap() {
     const tempLogger = new common_1.Logger('BootstrapDebug');
     tempLogger.log('🚀 BOOTSTRAP FUNCTION STARTED');
@@ -72,16 +73,30 @@ async function bootstrap() {
     }
     const nodeEnv = process.env.NODE_ENV || 'development';
     const isProduction = nodeEnv === 'production';
+    if (nodeEnv !== 'test') {
+        const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+        const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+        if (!jwtAccessSecret) {
+            tempLogger.error('❌ Startup failed: JWT_ACCESS_SECRET is required in non-test environments');
+            process.exit(1);
+        }
+        if (!jwtRefreshSecret) {
+            tempLogger.error('❌ Startup failed: JWT_REFRESH_SECRET is required in non-test environments');
+            process.exit(1);
+        }
+    }
     if (isProduction) {
         const requiredEnvVars = [
-            'MONGODB_URI',
-            'JWT_ACCESS_SECRET',
-            'JWT_REFRESH_SECRET',
             'CORS_ORIGIN'
         ];
         const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
         if (missingVars.length > 0) {
             tempLogger.error(`❌ Production startup failed: Missing required environment variables: ${missingVars.join(', ')}`);
+            process.exit(1);
+        }
+        const mongoUri = (0, persistence_1.getMongoUri)();
+        if (!mongoUri || mongoUri === 'mongodb://localhost:27017/mps') {
+            tempLogger.error('❌ Production startup failed: Valid MONGODB_URI or MONGO_URI is required');
             process.exit(1);
         }
         const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
@@ -103,7 +118,22 @@ async function bootstrap() {
     tempLogger.log('✅ NestFactory.create completed');
     const configService = app.get(config_1.ConfigService);
     tempLogger.log('✅ ConfigService obtained');
+    const mongoUri = (0, persistence_1.getMongoUri)();
+    const redisUrl = (0, persistence_1.getRedisUrl)();
+    const uploadsDir = (0, persistence_1.getUploadsDir)();
+    const dbName = (0, persistence_1.getDbName)();
+    const sanitizeUri = (uri) => {
+        try {
+            const url = new URL(uri.replace('mongodb://', 'http://').replace('redis://', 'http://'));
+            return `${url.hostname}:${url.port || (uri.startsWith('mongodb') ? '27017' : '6379')}${url.pathname || ''}`;
+        }
+        catch {
+            return uri.includes('localhost') ? uri : '[sanitized]';
+        }
+    };
     const logger = new common_1.Logger('Bootstrap');
+    logger.log(`Persistence -> DB=${dbName} URI=${sanitizeUri(mongoUri)} UPLOADS_DIR=${uploadsDir} REDIS=${sanitizeUri(redisUrl)}`);
+    logger.log(`Ephemeral Collections -> TTL indexes managed centrally (performancemetrics:30d, requesttimers:24h, syncoperations:7d, instancelocks:immediate)`);
     tempLogger.log('✅ Logger created');
     (0, class_validator_1.useContainer)(app.select(app_module_1.AppModule), { fallbackOnErrors: true });
     app.use((0, helmet_1.default)());

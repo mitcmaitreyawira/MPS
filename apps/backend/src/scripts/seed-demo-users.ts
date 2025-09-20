@@ -37,6 +37,17 @@ const demoUsers: CreateUserDto[] = [
 ];
 
 async function seedDemoUsers() {
+  // Safety guard: require confirmation flag
+  const args = process.argv.slice(2);
+  const hasConfirmFlag = args.includes('--yes-i-know');
+  
+  if (!hasConfirmFlag) {
+    console.error('❌ Safety guard: This script creates demo users in the database.');
+    console.error('   To proceed, run: npm run seed:demo -- --yes-i-know');
+    console.error('   Or: node dist/scripts/seed-demo-users.js --yes-i-know');
+    process.exit(1);
+  }
+  
   console.log('🚀 Starting demo users seeding...');
   
   const app = await NestFactory.createApplicationContext(AppModule);
@@ -70,5 +81,5 @@ async function seedDemoUsers() {
   }
 }
 
-// Run the seeding
+// Run the seeding with safety checks
 seedDemoUsers();

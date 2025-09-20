@@ -69,6 +69,7 @@ const data_module_1 = require("./modules/data/data.module");
 const integration_module_1 = require("./modules/integration/integration.module");
 const point_logs_module_1 = require("./modules/points/point-logs.module");
 const logger_service_1 = require("./common/services/logger.service");
+const ephemeral_collections_service_1 = require("./common/services/ephemeral-collections.service");
 const logging_interceptor_1 = require("./common/interceptors/logging.interceptor");
 const response_interceptor_1 = require("./common/interceptors/response.interceptor");
 const global_exception_filter_1 = require("./common/filters/global-exception.filter");
@@ -147,6 +148,7 @@ exports.AppModule = AppModule = __decorate([
         ],
         providers: [
             logger_service_1.StructuredLoggerService,
+            ephemeral_collections_service_1.EphemeralCollectionsService,
             {
                 provide: core_1.APP_INTERCEPTOR,
                 useClass: response_interceptor_1.ResponseInterceptor,

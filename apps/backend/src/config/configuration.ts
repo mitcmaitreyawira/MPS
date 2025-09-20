@@ -1,14 +1,13 @@
 import { Logger } from '@nestjs/common';
+import { getMongoUri, getUploadsDir } from './persistence';
 
 // Validate MongoDB URI at startup
 function validateMongoUri(): string {
-  const mongoUri = process.env.MONGODB_URI;
+  const mongoUri = getMongoUri();
   
-  if (!mongoUri) {
-    throw new Error(
-      'MONGODB_URI environment variable is required. ' +
-      'Please set it to your MongoDB connection string (e.g., mongodb://user:pass@host:port/dbname)'
-    );
+  if (!mongoUri || mongoUri === 'mongodb://localhost:27017/mps') {
+    const logger = new Logger('DatabaseConfig');
+    logger.warn('Using default MongoDB URI. Set MONGODB_URI or MONGO_URI for production.');
   }
 
   // Prevent in-memory DB in non-test environments
@@ -57,7 +56,7 @@ export default () => ({
   },
   upload: {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE ?? '10485760', 10),
-    dest: process.env.UPLOAD_DEST ?? './uploads',
+    dest: getUploadsDir(),
   },
   cache: { ttl: parseInt(process.env.CACHE_TTL ?? '300', 10) },
   swagger: { enable: (process.env.ENABLE_SWAGGER ?? 'true') === 'true' },

@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const common_1 = require("@nestjs/common");
+const persistence_1 = require("./persistence");
 function validateMongoUri() {
-    const mongoUri = process.env.MONGODB_URI;
-    if (!mongoUri) {
-        throw new Error('MONGODB_URI environment variable is required. ' +
-            'Please set it to your MongoDB connection string (e.g., mongodb://user:pass@host:port/dbname)');
+    const mongoUri = (0, persistence_1.getMongoUri)();
+    if (!mongoUri || mongoUri === 'mongodb://localhost:27017/mps') {
+        const logger = new common_1.Logger('DatabaseConfig');
+        logger.warn('Using default MongoDB URI. Set MONGODB_URI or MONGO_URI for production.');
     }
     const nodeEnv = process.env.NODE_ENV || 'development';
     if (nodeEnv !== 'test' && mongoUri.includes('mongodb-memory-server')) {
@@ -47,7 +48,7 @@ exports.default = () => ({
     },
     upload: {
         maxFileSize: parseInt(process.env.MAX_FILE_SIZE ?? '10485760', 10),
-        dest: process.env.UPLOAD_DEST ?? './uploads',
+        dest: (0, persistence_1.getUploadsDir)(),
     },
     cache: { ttl: parseInt(process.env.CACHE_TTL ?? '300', 10) },
     swagger: { enable: (process.env.ENABLE_SWAGGER ?? 'true') === 'true' },

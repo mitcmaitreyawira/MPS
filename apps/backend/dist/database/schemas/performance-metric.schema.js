@@ -68,7 +68,6 @@ exports.PerformanceMetricSchema.index({ operation: 1, timestamp: -1 });
 exports.PerformanceMetricSchema.index({ timestamp: -1 });
 exports.PerformanceMetricSchema.index({ isError: 1, timestamp: -1 });
 exports.PerformanceMetricSchema.index({ 'metadata.userId': 1, timestamp: -1 });
-exports.PerformanceMetricSchema.index({ createdAt: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 let RequestTimer = class RequestTimer {
     timerId;
     operation;
@@ -113,5 +112,4 @@ exports.RequestTimer = RequestTimer = __decorate([
 exports.RequestTimerSchema = mongoose_1.SchemaFactory.createForClass(RequestTimer);
 exports.RequestTimerSchema.index({ timerId: 1 }, { unique: true });
 exports.RequestTimerSchema.index({ status: 1, startTime: -1 });
-exports.RequestTimerSchema.index({ createdAt: 1 }, { expireAfterSeconds: 24 * 60 * 60 });
 //# sourceMappingURL=performance-metric.schema.js.map

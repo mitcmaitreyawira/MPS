@@ -27,6 +27,14 @@ const demoUsers = [
     }
 ];
 async function seedDemoUsers() {
+    const args = process.argv.slice(2);
+    const hasConfirmFlag = args.includes('--yes-i-know');
+    if (!hasConfirmFlag) {
+        console.error('❌ Safety guard: This script creates demo users in the database.');
+        console.error('   To proceed, run: npm run seed:demo -- --yes-i-know');
+        console.error('   Or: node dist/scripts/seed-demo-users.js --yes-i-know');
+        process.exit(1);
+    }
     console.log('🚀 Starting demo users seeding...');
     const app = await core_1.NestFactory.createApplicationContext(app_module_1.AppModule);
     const usersService = app.get(users_service_1.UsersService);

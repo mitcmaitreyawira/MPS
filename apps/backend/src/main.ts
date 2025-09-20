@@ -12,6 +12,7 @@ import { AppModule } from './app.module';
 import { useContainer } from 'class-validator';
 import { DropUsernameIndexMigration } from './database/migrations/drop-username-index.migration';
 import { DevLockService } from './common/services/devlock.service';
+import { getMongoUri, getRedisUrl, getUploadsDir, getDbName } from './config/persistence';
 
 async function bootstrap() {
   const tempLogger = new Logger('BootstrapDebug');
@@ -39,21 +40,40 @@ async function bootstrap() {
     process.exit(1);
   }
   
-  // Production safety rails - validate critical environment variables
+  // Critical secrets validation - fail fast if missing in non-test environments
   const nodeEnv = process.env.NODE_ENV || 'development';
   const isProduction = nodeEnv === 'production';
   
+  if (nodeEnv !== 'test') {
+    const jwtAccessSecret = process.env.JWT_ACCESS_SECRET;
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET;
+    
+    if (!jwtAccessSecret) {
+      tempLogger.error('❌ Startup failed: JWT_ACCESS_SECRET is required in non-test environments');
+      process.exit(1);
+    }
+    
+    if (!jwtRefreshSecret) {
+      tempLogger.error('❌ Startup failed: JWT_REFRESH_SECRET is required in non-test environments');
+      process.exit(1);
+    }
+  }
+  
   if (isProduction) {
     const requiredEnvVars = [
-      'MONGODB_URI',
-      'JWT_ACCESS_SECRET',
-      'JWT_REFRESH_SECRET',
       'CORS_ORIGIN'
     ];
     
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
     if (missingVars.length > 0) {
       tempLogger.error(`❌ Production startup failed: Missing required environment variables: ${missingVars.join(', ')}`);
+      process.exit(1);
+    }
+    
+    // Validate MongoDB URI is available
+    const mongoUri = getMongoUri();
+    if (!mongoUri || mongoUri === 'mongodb://localhost:27017/mps') {
+      tempLogger.error('❌ Production startup failed: Valid MONGODB_URI or MONGO_URI is required');
       process.exit(1);
     }
     
@@ -83,7 +103,26 @@ async function bootstrap() {
   tempLogger.log('✅ NestFactory.create completed');
   const configService = app.get(ConfigService);
   tempLogger.log('✅ ConfigService obtained');
+  
+  // Startup banner - persistence configuration
+  const mongoUri = getMongoUri();
+  const redisUrl = getRedisUrl();
+  const uploadsDir = getUploadsDir();
+  const dbName = getDbName();
+  
+  // Sanitize credentials for logging
+  const sanitizeUri = (uri: string) => {
+    try {
+      const url = new URL(uri.replace('mongodb://', 'http://').replace('redis://', 'http://'));
+      return `${url.hostname}:${url.port || (uri.startsWith('mongodb') ? '27017' : '6379')}${url.pathname || ''}`;
+    } catch {
+      return uri.includes('localhost') ? uri : '[sanitized]';
+    }
+  };
+  
   const logger = new Logger('Bootstrap');
+  logger.log(`Persistence -> DB=${dbName} URI=${sanitizeUri(mongoUri)} UPLOADS_DIR=${uploadsDir} REDIS=${sanitizeUri(redisUrl)}`);
+  logger.log(`Ephemeral Collections -> TTL indexes managed centrally (performancemetrics:30d, requesttimers:24h, syncoperations:7d, instancelocks:immediate)`);
   tempLogger.log('✅ Logger created');
 
   // Enable class-validator to use Nest's DI container (for proper metadata resolution)

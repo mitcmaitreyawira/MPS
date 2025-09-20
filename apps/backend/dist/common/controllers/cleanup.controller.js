@@ -36,18 +36,25 @@ let CleanupController = class CleanupController {
         await this.cleanupService.cleanupFailedSyncOperations();
         return { message: 'Failed operations cleanup completed' };
     }
-    async performMaintenance() {
+    async performMaintenance(confirm) {
+        if (confirm !== 'yes-i-know') {
+            throw new Error('Safety guard: confirm parameter must be "yes-i-know" to proceed with maintenance');
+        }
         await this.cleanupService.performMonthlyMaintenance();
         return { message: 'Monthly maintenance completed' };
     }
-    async performManualCleanup(metricsOlderThanDays, syncOlderThanDays, dryRun) {
+    async performManualCleanup(metricsOlderThanDays, syncOlderThanDays, dryRun, confirm) {
+        const isDryRun = dryRun === true || String(dryRun) === 'true';
+        if (!isDryRun && confirm !== 'yes-i-know') {
+            throw new Error('Safety guard: confirm parameter must be "yes-i-know" to proceed with actual deletion. Use dryRun=true to preview changes.');
+        }
         const result = await this.cleanupService.performManualCleanup({
             metricsOlderThanDays: metricsOlderThanDays ? Number(metricsOlderThanDays) : undefined,
             syncOlderThanDays: syncOlderThanDays ? Number(syncOlderThanDays) : undefined,
-            dryRun: dryRun === true || String(dryRun) === 'true',
+            dryRun: isDryRun,
         });
         return {
-            message: 'Manual cleanup completed',
+            message: isDryRun ? 'Dry run completed' : 'Manual cleanup completed',
             result,
         };
     }
@@ -91,9 +98,11 @@ __decorate([
 __decorate([
     (0, common_1.Post)('maintenance'),
     (0, swagger_1.ApiOperation)({ summary: 'Perform comprehensive monthly maintenance' }),
+    (0, swagger_1.ApiQuery)({ name: 'confirm', required: true, type: String, description: 'Must be "yes-i-know" to confirm this operation' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Maintenance completed successfully' }),
+    __param(0, (0, common_1.Query)('confirm')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CleanupController.prototype, "performMaintenance", null);
 __decorate([
@@ -102,12 +111,14 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'metricsOlderThanDays', required: false, type: Number, description: 'Delete metrics older than N days (default: 30)' }),
     (0, swagger_1.ApiQuery)({ name: 'syncOlderThanDays', required: false, type: Number, description: 'Delete sync operations older than N days (default: 7)' }),
     (0, swagger_1.ApiQuery)({ name: 'dryRun', required: false, type: Boolean, description: 'Perform dry run without actual deletion (default: false)' }),
+    (0, swagger_1.ApiQuery)({ name: 'confirm', required: false, type: String, description: 'Must be "yes-i-know" to confirm actual deletion (not required for dry runs)' }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Manual cleanup completed successfully' }),
     __param(0, (0, common_1.Query)('metricsOlderThanDays')),
     __param(1, (0, common_1.Query)('syncOlderThanDays')),
     __param(2, (0, common_1.Query)('dryRun')),
+    __param(3, (0, common_1.Query)('confirm')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Number, Number, Boolean]),
+    __metadata("design:paramtypes", [Number, Number, Boolean, String]),
     __metadata("design:returntype", Promise)
 ], CleanupController.prototype, "performManualCleanup", null);
 __decorate([

@@ -55,19 +55,27 @@ export class AdminController {
           items: { type: 'string' },
           description: 'Array of user IDs to delete',
         },
+        confirmDeletion: {
+          type: 'string',
+          description: 'Must be "yes-i-know" to confirm this dangerous operation',
+          example: 'yes-i-know'
+        },
       },
-      required: ['userIds'],
+      required: ['userIds', 'confirmDeletion'],
     },
   })
   @ApiResponse({ status: 200, description: 'Users deleted successfully' })
   @ApiResponse({ status: 400, description: 'Invalid request data' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async bulkDeleteUsers(@Body() body: { userIds: string[] }): Promise<{ deletedCount: number }> {
+  async bulkDeleteUsers(@Body() body: { userIds: string[]; confirmDeletion: string }): Promise<{ deletedCount: number }> {
+    if (body.confirmDeletion !== 'yes-i-know') {
+      throw new Error('Safety guard: confirmDeletion must be "yes-i-know" to proceed with this dangerous operation');
+    }
     this.logger.warn(`Admin bulk delete users requested for ${body.userIds.length} users`);
     return this.adminService.bulkDeleteUsers(body.userIds);
   }
 
-  @Delete('badge/:badgeId')
+  @Post('badge/:badgeId/delete')
   @Roles('admin')
   @HttpCode(HttpStatus.OK)
   @RateLimit({ windowMs: 60000, maxRequests: 10 }) // 10 requests per minute
@@ -76,11 +84,30 @@ export class AdminController {
     description: 'Permanently delete a badge and revoke it from all users.',
   })
   @ApiParam({ name: 'badgeId', description: 'Badge ID to delete' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        confirmDeletion: {
+          type: 'string',
+          description: 'Must be "yes-i-know" to confirm this dangerous operation',
+          example: 'yes-i-know'
+        },
+      },
+      required: ['confirmDeletion'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Badge deleted successfully' })
   @ApiResponse({ status: 404, description: 'Badge not found' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async deleteBadge(@Param('badgeId') badgeId: string): Promise<{ deletedBadge: string; affectedUsers: number }> {
-    this.logger.warn(`Admin delete badge requested for badge: ${badgeId}`);
+  async deleteBadge(
+    @Param('badgeId') badgeId: string,
+    @Body() body: { confirmDeletion: string }
+  ): Promise<{ deletedBadge: string; affectedUsers: number }> {
+    if (body.confirmDeletion !== 'yes-i-know') {
+      throw new Error('Safety guard: confirmDeletion must be "yes-i-know" to proceed with this dangerous operation');
+    }
+    this.logger.warn(`Admin delete badge requested: ${badgeId}`);
     return this.adminService.deleteBadge(badgeId);
   }
 
@@ -94,10 +121,26 @@ export class AdminController {
     summary: 'Emergency system reset (NUCLEAR OPTION)',
     description: 'Emergency system reset. This will reset most system data. USE ONLY IN EMERGENCIES.',
   })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        confirmReset: {
+          type: 'string',
+          description: 'Must be "yes-i-know-this-is-destructive" to confirm this nuclear operation',
+          example: 'yes-i-know-this-is-destructive'
+        },
+      },
+      required: ['confirmReset'],
+    },
+  })
   @ApiResponse({ status: 200, description: 'Emergency reset completed' })
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
-  async emergencySystemReset(): Promise<{ message: string; timestamp: string }> {
-    this.logger.error('NUCLEAR OPTION: Emergency system reset requested');
+  async emergencySystemReset(@Body() body: { confirmReset: string }): Promise<{ message: string; timestamp: string }> {
+    if (body.confirmReset !== 'yes-i-know-this-is-destructive') {
+      throw new Error('Safety guard: confirmReset must be "yes-i-know-this-is-destructive" to proceed with this nuclear operation');
+    }
+    this.logger.error('EMERGENCY SYSTEM RESET REQUESTED');
     return this.adminService.emergencySystemReset();
   }
 }

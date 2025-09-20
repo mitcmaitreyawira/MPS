@@ -9,6 +9,7 @@ import { Connection } from 'mongoose';
 import { JwtCookieAuthGuard } from '../auth/jwt-cookie.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { getMongoUri } from '../../config/persistence';
 
 class HealthResponseDto {
   @ApiProperty({ description: 'Application health status', example: 'ok' })
@@ -233,9 +234,9 @@ export class HealthController {
     // Extract database name and host from connection
     const dbName = db?.databaseName || 'unknown';
     
-    // Parse host from MONGODB_URI without exposing credentials
+    // Parse host from MongoDB URI without exposing credentials
     let host = 'unknown';
-    const mongoUri = process.env.MONGODB_URI;
+    const mongoUri = getMongoUri();
     if (mongoUri) {
       try {
         // Extract host and port from URI, removing credentials

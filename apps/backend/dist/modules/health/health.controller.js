@@ -24,6 +24,7 @@ const mongoose_2 = require("mongoose");
 const jwt_cookie_guard_1 = require("../auth/jwt-cookie.guard");
 const roles_guard_1 = require("../auth/roles.guard");
 const roles_decorator_1 = require("../auth/roles.decorator");
+const persistence_1 = require("../../config/persistence");
 class HealthResponseDto {
     status;
     timestamp;
@@ -220,7 +221,7 @@ let HealthController = class HealthController {
         }
         const dbName = db?.databaseName || 'unknown';
         let host = 'unknown';
-        const mongoUri = process.env.MONGODB_URI;
+        const mongoUri = (0, persistence_1.getMongoUri)();
         if (mongoUri) {
             try {
                 const url = new URL(mongoUri);

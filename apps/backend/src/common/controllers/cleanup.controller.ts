@@ -39,8 +39,12 @@ export class CleanupController {
 
   @Post('maintenance')
   @ApiOperation({ summary: 'Perform comprehensive monthly maintenance' })
+  @ApiQuery({ name: 'confirm', required: true, type: String, description: 'Must be "yes-i-know" to confirm this operation' })
   @ApiResponse({ status: 200, description: 'Maintenance completed successfully' })
-  async performMaintenance() {
+  async performMaintenance(@Query('confirm') confirm?: string) {
+    if (confirm !== 'yes-i-know') {
+      throw new Error('Safety guard: confirm parameter must be "yes-i-know" to proceed with maintenance');
+    }
     await this.cleanupService.performMonthlyMaintenance();
     return { message: 'Monthly maintenance completed' };
   }
@@ -50,20 +54,28 @@ export class CleanupController {
   @ApiQuery({ name: 'metricsOlderThanDays', required: false, type: Number, description: 'Delete metrics older than N days (default: 30)' })
   @ApiQuery({ name: 'syncOlderThanDays', required: false, type: Number, description: 'Delete sync operations older than N days (default: 7)' })
   @ApiQuery({ name: 'dryRun', required: false, type: Boolean, description: 'Perform dry run without actual deletion (default: false)' })
+  @ApiQuery({ name: 'confirm', required: false, type: String, description: 'Must be "yes-i-know" to confirm actual deletion (not required for dry runs)' })
   @ApiResponse({ status: 200, description: 'Manual cleanup completed successfully' })
   async performManualCleanup(
     @Query('metricsOlderThanDays') metricsOlderThanDays?: number,
     @Query('syncOlderThanDays') syncOlderThanDays?: number,
     @Query('dryRun') dryRun?: boolean,
+    @Query('confirm') confirm?: string,
   ) {
+    const isDryRun = dryRun === true || String(dryRun) === 'true';
+    
+    if (!isDryRun && confirm !== 'yes-i-know') {
+      throw new Error('Safety guard: confirm parameter must be "yes-i-know" to proceed with actual deletion. Use dryRun=true to preview changes.');
+    }
+    
     const result = await this.cleanupService.performManualCleanup({
       metricsOlderThanDays: metricsOlderThanDays ? Number(metricsOlderThanDays) : undefined,
       syncOlderThanDays: syncOlderThanDays ? Number(syncOlderThanDays) : undefined,
-      dryRun: dryRun === true || String(dryRun) === 'true',
+      dryRun: isDryRun,
     });
 
     return {
-      message: 'Manual cleanup completed',
+      message: isDryRun ? 'Dry run completed' : 'Manual cleanup completed',
       result,
     };
   }
